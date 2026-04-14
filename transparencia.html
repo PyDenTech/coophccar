@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
   <title>Transparência – COOPHCCAR</title>
-  <meta name="description" content="Portal de Transparência da COOPHCCAR – execução financeira e planos de trabalho em conformidade com a IN 006/2025-TCM/PA.">
+  <meta name="description" content="Portal de Transparência da COOPHCCAR – execução financeira, planos de trabalho, parcerias e documentos.">
   <link href="assets/img/favicon.png" rel="icon">
   <link href="assets/img/apple-touch-icon.png" rel="apple-touch-icon">
   <link href="https://fonts.googleapis.com" rel="preconnect">
@@ -19,17 +19,6 @@
   <link href="assets/css/coophccar.css" rel="stylesheet">
 </head>
 <body class="transparencia-page">
-
-  <div class="conformidade-bar d-none d-md-block">
-    <div class="container d-flex justify-content-between align-items-center">
-      <span><i class="bi bi-shield-check me-1"></i> Site em conformidade com a <strong>IN 006/2025-TCM/PA</strong></span>
-      <div class="d-flex gap-3">
-        <a href="transparencia.html"><i class="bi bi-graph-up me-1"></i>Portal de Transparência</a>
-        <a href="contato.html"><i class="bi bi-envelope me-1"></i>Fale Conosco</a>
-        <a href="mailto:denuncia@coophccar.org.br"><i class="bi bi-megaphone me-1"></i>Canal de Denúncia</a>
-      </div>
-    </div>
-  </div>
 
   <header id="header" class="header d-flex align-items-center sticky-top">
     <div class="container-fluid container-xl position-relative d-flex align-items-center justify-content-between">
@@ -59,10 +48,10 @@
               <li><a href="transparencia.html#emendas">Emendas</a></li>
               <li><a href="transparencia.html#documentos">Documentos</a></li>
               <li><a href="transparencia.html#prestacao">Prestação de Contas</a></li>
-              <li><a href="transparencia.html#conformidade">Conformidade Legal</a></li>
             </ul>
           </li>
           <li><a href="contato.html" data-page="contato">Contato</a></li>
+          <li class="nav-admin-login"><a href="login.html"><i class="bi bi-lock-fill"></i> Admin</a></li>
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
@@ -77,21 +66,13 @@
 
   <main class="main">
 
-    <div class="page-title" style="background-image: url('assets/img/coophccar/expocampo-06.jpg');" onerror="this.style.backgroundImage='url(assets/img/page-title-bg.webp)'">
+    <div class="page-title" style="background-image: url('assets/img/coophccar/expocampo-06.jpg');">
       <div class="container">
-        <h1>Transparência</h1>
-        <p class="subtitle">Execução financeira e planos de trabalho em conformidade com a IN 006/2025-TCM/PA</p>
+        <h1>Portal de Transparência</h1>
+        <p class="subtitle">Execução financeira, planos de trabalho, parcerias e documentos da cooperativa</p>
         <nav class="breadcrumb-nav">
           <ol><li><a href="index.html">Início</a></li><li class="current">Transparência</li></ol>
         </nav>
-      </div>
-    </div>
-
-    <!-- Aviso de conformidade -->
-    <div class="py-3" style="background:#116530;color:#fff;text-align:center;font-size:0.88rem;">
-      <div class="container">
-        <i class="bi bi-shield-check me-2"></i>
-        As informações desta página são divulgadas em cumprimento à <strong>Instrução Normativa IN 006/2025-TCM/PA</strong> e à <strong>Lei Federal 13.019/2014</strong>.
       </div>
     </div>
 
@@ -99,59 +80,21 @@
     <section id="execucao" class="section" style="padding:80px 0;background:#f4f9f6;">
       <div class="container">
         <div class="section-header" data-aos="fade-up">
-          <span class="badge-conformidade">IN 006/2025-TCM/PA</span>
           <h2>Execução Financeira</h2>
-          <p>Acompanhe a execução dos recursos recebidos pela cooperativa por período</p>
+          <p>Acompanhe a execução dos recursos recebidos pela cooperativa</p>
         </div>
-
-        <!-- Filtro de ano -->
-        <div class="d-flex gap-2 justify-content-center mb-5" data-aos="fade-up">
-          <button class="btn btn-sm btn-transparencia" onclick="filtrarAno(this, '2025')" style="border-radius:20px;padding:6px 18px;">2025</button>
-          <button class="btn btn-sm btn-transparencia-outline" onclick="filtrarAno(this, '2024')" style="border-radius:20px;padding:6px 18px;">2024</button>
-          <button class="btn btn-sm btn-transparencia-outline" onclick="filtrarAno(this, '2023')" style="border-radius:20px;padding:6px 18px;">2023</button>
+        <div class="row g-4" data-aos="fade-up" id="resumoFinanceiro">
+          <div class="text-center py-4"><div class="spinner-border text-success"></div><p class="mt-2 text-muted">Carregando dados...</p></div>
         </div>
-
-        <div class="row g-4" data-aos="fade-up">
-          <!-- Cards de resumo financeiro -->
-          <div class="col-md-4">
-            <div class="transparencia-card text-center">
-              <div class="tc-icon"><i class="bi bi-currency-dollar"></i></div>
-              <h4>Receitas Totais</h4>
-              <p class="fs-3 fw-bold" style="color:#116530;">R$ 000.000,00</p>
-              <p>Recursos recebidos no exercício</p>
-              <a href="documentos/execucao-financeira.pdf" target="_blank" class="btn-transparencia">
-                <i class="bi bi-file-earmark-bar-graph"></i> Acessar Relatório
-              </a>
+        <div class="mt-5" data-aos="fade-up">
+          <div class="admin-panel">
+            <div class="panel-header"><h5><i class="bi bi-list-ul me-2"></i>Detalhamento</h5></div>
+            <div class="panel-body">
+              <div class="table-responsive" id="execucaoTable">
+                <p class="text-muted text-center">Carregando...</p>
+              </div>
             </div>
           </div>
-          <div class="col-md-4">
-            <div class="transparencia-card text-center">
-              <div class="tc-icon"><i class="bi bi-receipt-cutoff"></i></div>
-              <h4>Despesas Executadas</h4>
-              <p class="fs-3 fw-bold" style="color:#116530;">R$ 000.000,00</p>
-              <p>Total de despesas no exercício</p>
-              <a href="documentos/execucao-financeira.pdf" target="_blank" class="btn-transparencia">
-                <i class="bi bi-file-earmark-bar-graph"></i> Acessar Relatório
-              </a>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="transparencia-card text-center" style="border-top-color:#d4a017;">
-              <div class="tc-icon" style="color:#d4a017;"><i class="bi bi-piggy-bank"></i></div>
-              <h4>Saldo do Período</h4>
-              <p class="fs-3 fw-bold" style="color:#d4a017;">R$ 000.000,00</p>
-              <p>Saldo disponível ao final do exercício</p>
-              <a href="documentos/execucao-financeira.pdf" target="_blank" class="btn-transparencia" style="background:#d4a017;">
-                <i class="bi bi-file-earmark-bar-graph"></i> Acessar Relatório
-              </a>
-            </div>
-          </div>
-        </div>
-
-        <div class="text-center mt-5" data-aos="fade-up">
-          <a href="documentos/execucao-financeira.pdf" target="_blank" class="btn-transparencia" style="padding:13px 32px;font-size:1rem;">
-            <i class="bi bi-file-earmark-bar-graph"></i> Acessar Relatório Completo de Execução Financeira
-          </a>
         </div>
       </div>
     </section>
@@ -160,140 +103,64 @@
     <section id="planos" class="section" style="padding:80px 0;background:#fff;">
       <div class="container">
         <div class="section-header" data-aos="fade-up">
-          <span class="badge-conformidade">IN 006/2025-TCM/PA</span>
           <h2>Planos de Trabalho</h2>
           <p>Metas, atividades e cronogramas das ações desenvolvidas pela COOPHCCAR</p>
         </div>
-
-        <div class="row g-4" data-aos="fade-up">
-          <div class="col-lg-4 col-md-6">
-            <div class="transparencia-card">
-              <div class="tc-icon"><i class="bi bi-clipboard2-check-fill"></i></div>
-              <h4>Plano de Trabalho 2025</h4>
-              <p>Metas e atividades planejadas para o exercício de 2025, incluindo ações de fomento à produção, capacitação e acesso a mercados.</p>
-              <a href="documentos/plano-trabalho-2025.pdf" target="_blank" class="btn-transparencia">
-                <i class="bi bi-eye"></i> Ver Planos
-              </a>
-            </div>
-          </div>
-          <div class="col-lg-4 col-md-6">
-            <div class="transparencia-card">
-              <div class="tc-icon"><i class="bi bi-clipboard2-check"></i></div>
-              <h4>Plano de Trabalho 2024</h4>
-              <p>Plano aprovado para o exercício de 2024, com cronograma de atividades e indicadores de desempenho alcançados.</p>
-              <a href="documentos/plano-trabalho-2024.pdf" target="_blank" class="btn-transparencia">
-                <i class="bi bi-eye"></i> Ver Planos
-              </a>
-            </div>
-          </div>
-          <div class="col-lg-4 col-md-6">
-            <div class="transparencia-card">
-              <div class="tc-icon"><i class="bi bi-clipboard2"></i></div>
-              <h4>Plano de Trabalho 2023</h4>
-              <p>Histórico do plano de trabalho de 2023, com execução das metas e relatório de resultados alcançados.</p>
-              <a href="documentos/plano-trabalho-2023.pdf" target="_blank" class="btn-transparencia">
-                <i class="bi bi-eye"></i> Ver Planos
-              </a>
-            </div>
-          </div>
+        <div class="row g-4" data-aos="fade-up" id="planosContainer">
+          <div class="text-center py-4"><div class="spinner-border text-success"></div></div>
         </div>
       </div>
     </section>
 
-    <!-- PORTAL DE TRANSPARÊNCIA LINK -->
+    <!-- PARCERIAS PÚBLICAS -->
     <section id="parcerias" class="section" style="padding:80px 0;background:#f4f9f6;">
       <div class="container">
         <div class="section-header" data-aos="fade-up">
-          <span class="badge-conformidade">IN 006/2025-TCM/PA</span>
-          <h2>Parcerias PÃºblicas</h2>
-          <p>ConvÃªnios, contratos e instrumentos de parceria com o poder pÃºblico.</p>
+          <h2>Parcerias Públicas</h2>
+          <p>Convênios, contratos e instrumentos de parceria com o poder público</p>
         </div>
-        <div class="row g-4 mb-5">
-          <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="100"><div class="parceria-card"><div class="parceria-icon"><i class="bi bi-bank"></i></div><div class="parceria-content"><h5>Prefeitura Municipal de CanaÃ£ dos CarajÃ¡s</h5><p>Parceria para fornecimento de alimentos frescos ao PNAE e programas municipais de seguranÃ§a alimentar.</p><div class="d-flex gap-2 flex-wrap mt-2"><span class="status-badge status-em-execucao">Em ExecuÃ§Ã£o</span></div><div class="mt-3"><a href="documentos/parceria-prefeitura.pdf" target="_blank" class="btn-transparencia-outline"><i class="bi bi-eye"></i> Ver Parceria</a></div></div></div></div>
-          <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="150"><div class="parceria-card"><div class="parceria-icon"><i class="bi bi-building-check"></i></div><div class="parceria-content"><h5>Governo do Estado do ParÃ¡</h5><p>ConvÃªnio de fomento Ã  produÃ§Ã£o, assistÃªncia tÃ©cnica e acesso a mercados institucionais.</p><div class="d-flex gap-2 flex-wrap mt-2"><span class="status-badge status-em-execucao">Em ExecuÃ§Ã£o</span></div><div class="mt-3"><a href="documentos/parceria-estado.pdf" target="_blank" class="btn-transparencia-outline"><i class="bi bi-eye"></i> Ver Parceria</a></div></div></div></div>
-          <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="200"><div class="parceria-card"><div class="parceria-icon"><i class="bi bi-globe-americas"></i></div><div class="parceria-content"><h5>Governo Federal â€“ PAA / PNAE</h5><p>Compra institucional de alimentos da agricultura familiar com foco em produÃ§Ã£o local e abastecimento.</p><div class="d-flex gap-2 flex-wrap mt-2"><span class="status-badge status-em-execucao">Em ExecuÃ§Ã£o</span></div><div class="mt-3"><a href="documentos/parceria-federal.pdf" target="_blank" class="btn-transparencia-outline"><i class="bi bi-eye"></i> Ver Parceria</a></div></div></div></div>
+        <div class="row g-4" data-aos="fade-up" id="parceriasContainer">
+          <div class="text-center py-4"><div class="spinner-border text-success"></div></div>
         </div>
       </div>
     </section>
 
+    <!-- EMENDAS PARLAMENTARES -->
     <section id="emendas" class="section" style="padding:80px 0;background:#fff;">
       <div class="container">
         <div class="section-header" data-aos="fade-up">
-          <span class="badge-conformidade">IN 006/2025-TCM/PA</span>
           <h2>Emendas Parlamentares</h2>
-          <p>InformaÃ§Ãµes sobre proponente, objeto, valores, execuÃ§Ã£o e contas especÃ­ficas.</p>
+          <p>Informações sobre proponente, objeto, valores, execução e contas específicas</p>
         </div>
-        <div class="emendas-table-wrapper" data-aos="fade-up">
-          <table class="emendas-table">
-            <thead><tr><th>Proponente</th><th>Objeto</th><th>Valor Total (R$)</th><th>Valor Executado (R$)</th><th>Status</th><th>Conta EspecÃ­fica</th><th>AÃ§Ãµes</th></tr></thead>
-            <tbody>
-              <tr><td><strong>Deputado Federal<br>[Nome do Parlamentar]</strong></td><td>AquisiÃ§Ã£o de equipamentos para beneficiamento de produtos da agricultura familiar</td><td>R$ 150.000,00</td><td>R$ 120.000,00</td><td><span class="status-badge status-em-execucao">Em ExecuÃ§Ã£o</span></td><td>Banco: XXX<br>Ag: XXXX<br>C/C: XXXXX-X</td><td><a href="documentos/emenda-relatorio-1.pdf" target="_blank" class="btn-transparencia-outline" style="padding:4px 10px;font-size:0.78rem;"><i class="bi bi-download"></i> RelatÃ³rio</a></td></tr>
-              <tr><td><strong>Deputado Estadual<br>[Nome do Parlamentar]</strong></td><td>Infraestrutura de armazenamento e cÃ¢mara fria para produtos hortifrutigranjeiros</td><td>R$ 80.000,00</td><td>R$ 80.000,00</td><td><span class="status-badge status-concluido">ConcluÃ­do</span></td><td>Banco: XXX<br>Ag: XXXX<br>C/C: XXXXX-X</td><td><a href="documentos/emenda-relatorio-2.pdf" target="_blank" class="btn-transparencia-outline" style="padding:4px 10px;font-size:0.78rem;"><i class="bi bi-download"></i> RelatÃ³rio</a></td></tr>
-              <tr><td><strong>Senador<br>[Nome do Parlamentar]</strong></td><td>CapacitaÃ§Ã£o tÃ©cnica e assistÃªncia para produtores rurais cooperados</td><td>R$ 45.000,00</td><td>R$ 0,00</td><td><span class="status-badge status-pendente">Pendente</span></td><td>Banco: XXX<br>Ag: XXXX<br>C/C: XXXXX-X</td><td><a href="documentos/emenda-relatorio-3.pdf" target="_blank" class="btn-transparencia-outline" style="padding:4px 10px;font-size:0.78rem;"><i class="bi bi-download"></i> RelatÃ³rio</a></td></tr>
-            </tbody>
-          </table>
+        <div data-aos="fade-up" id="emendasContainer">
+          <div class="text-center py-4"><div class="spinner-border text-success"></div></div>
         </div>
       </div>
     </section>
 
+    <!-- DOCUMENTOS -->
     <section id="documentos" class="section" style="padding:80px 0;background:#f4f9f6;">
       <div class="container">
         <div class="section-header" data-aos="fade-up">
-          <span class="badge-conformidade">GovernanÃ§a</span>
           <h2>Documentos</h2>
-          <p>Arquivos institucionais e de regularidade da cooperativa.</p>
+          <p>Arquivos institucionais e de regularidade da cooperativa</p>
         </div>
-        <div class="row g-4">
-          <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="100"><div class="doc-card"><div class="doc-icon"><i class="bi bi-file-earmark-text-fill"></i></div><h5>Estatuto Social</h5><p>Documento constitutivo com regras de funcionamento da cooperativa.</p><div class="doc-actions"><a href="documentos/estatuto-social.pdf" target="_blank" class="btn-transparencia"><i class="bi bi-eye"></i> Visualizar</a></div></div></div>
-          <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="150"><div class="doc-card"><div class="doc-icon doc-icon-blue"><i class="bi bi-file-earmark-check-fill"></i></div><h5>Ata de EleiÃ§Ã£o</h5><p>Registro da assembleia e da composiÃ§Ã£o da diretoria da entidade.</p><div class="doc-actions"><a href="documentos/ata-eleicao.pdf" target="_blank" class="btn-transparencia"><i class="bi bi-eye"></i> Visualizar</a></div></div></div>
-          <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="200"><div class="doc-card"><div class="doc-icon doc-icon-green"><i class="bi bi-card-text"></i></div><h5>CartÃ£o CNPJ</h5><p>ComprovaÃ§Ã£o do cadastro ativo da cooperativa junto Ã  Receita Federal.</p><div class="doc-actions"><a href="documentos/cartao-cnpj.pdf" target="_blank" class="btn-transparencia"><i class="bi bi-eye"></i> Visualizar</a></div></div></div>
-          <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="250"><div class="doc-card"><div class="doc-icon doc-icon-orange"><i class="bi bi-patch-check-fill"></i></div><h5>CertidÃµes Negativas</h5><p>CertidÃµes fiscais e trabalhistas exigidas para regularidade institucional.</p><div class="doc-actions"><a href="documentos/certidoes-negativas.pdf" target="_blank" class="btn-transparencia"><i class="bi bi-eye"></i> Visualizar</a></div></div></div>
+        <div class="row g-4" data-aos="fade-up" id="documentosContainer">
+          <div class="text-center py-4"><div class="spinner-border text-success"></div></div>
         </div>
       </div>
     </section>
 
+    <!-- PRESTAÇÃO DE CONTAS -->
     <section id="prestacao" class="section" style="padding:80px 0;background:#fff;">
       <div class="container">
         <div class="section-header" data-aos="fade-up">
-          <span class="badge-conformidade">Controle e FiscalizaÃ§Ã£o</span>
-          <h2>PrestaÃ§Ã£o de Contas</h2>
-          <p>BalanÃ§o patrimonial, DRE, pareceres e registros de aprovaÃ§Ã£o.</p>
+          <h2>Prestação de Contas</h2>
+          <p>Balanço patrimonial, DRE, pareceres e registros de aprovação</p>
         </div>
-        <div class="row g-3">
-          <div class="col-12" data-aos="fade-up" data-aos-delay="100"><div class="prestacao-item"><div class="prestacao-icon"><i class="bi bi-bank2"></i></div><div class="prestacao-content"><h5>BalanÃ§o Patrimonial</h5><p>DemonstraÃ§Ã£o da posiÃ§Ã£o patrimonial e financeira da COOPHCCAR.</p></div><div class="prestacao-actions"><a href="documentos/balanco-patrimonial.pdf" target="_blank" class="btn-transparencia"><i class="bi bi-eye"></i> Visualizar</a></div></div></div>
-          <div class="col-12" data-aos="fade-up" data-aos-delay="150"><div class="prestacao-item"><div class="prestacao-icon"><i class="bi bi-graph-up-arrow"></i></div><div class="prestacao-content"><h5>DRE</h5><p>RelatÃ³rio de receitas, despesas e resultado do exercÃ­cio.</p></div><div class="prestacao-actions"><a href="documentos/dre.pdf" target="_blank" class="btn-transparencia"><i class="bi bi-eye"></i> Visualizar</a></div></div></div>
-          <div class="col-12" data-aos="fade-up" data-aos-delay="200"><div class="prestacao-item"><div class="prestacao-icon"><i class="bi bi-shield-check"></i></div><div class="prestacao-content"><h5>Pareceres</h5><p>Manifestacoes tecnicas da auditoria e do conselho fiscal sobre as contas apresentadas.</p></div><div class="prestacao-actions"><a href="documentos/parecer-auditoria.pdf" target="_blank" class="btn-transparencia-outline"><i class="bi bi-search"></i> Auditoria</a><a href="documentos/parecer-conselho-fiscal.pdf" target="_blank" class="btn-transparencia"><i class="bi bi-search"></i> Conselho Fiscal</a></div></div></div>
-          <div class="col-12" data-aos="fade-up" data-aos-delay="250"><div class="prestacao-item"><div class="prestacao-icon"><i class="bi bi-file-earmark-ruled"></i></div><div class="prestacao-content"><h5>Ata de AprovaÃ§Ã£o</h5><p>Registro da apreciaÃ§Ã£o e aprovaÃ§Ã£o formal das contas em assembleia.</p></div><div class="prestacao-actions"><a href="documentos/ata-aprovacao-contas.pdf" target="_blank" class="btn-transparencia"><i class="bi bi-eye"></i> Visualizar</a></div></div></div>
+        <div class="row g-3" data-aos="fade-up" id="prestacaoContainer">
+          <div class="text-center py-4"><div class="spinner-border text-success"></div></div>
         </div>
-      </div>
-    </section>
-
-    <section id="conformidade" class="section" style="padding:80px 0;background:#f4f9f6;">
-      <div class="container">
-        <div class="section-header" data-aos="fade-up">
-          <span class="badge-conformidade">Integridade Institucional</span>
-          <h2>Conformidade Legal</h2>
-          <p>Normativos, polÃ­ticas internas e instrumentos de governanÃ§a para publicidade e integridade.</p>
-        </div>
-        <div class="row g-4">
-          <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="100"><div class="conformidade-card"><div class="conf-header"><div class="conf-icon"><i class="bi bi-file-earmark-text"></i></div><h5>Regulamento de Compras</h5></div><p>Regras internas para aquisicoes e selecao de fornecedores.</p><a href="documentos/regulamento-compras.pdf" target="_blank" class="btn-transparencia-outline"><i class="bi bi-eye"></i> Visualizar</a></div></div>
-          <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="150"><div class="conformidade-card"><div class="conf-header"><div class="conf-icon"><i class="bi bi-shield-lock"></i></div><h5>PolÃ­tica LGPD</h5></div><p>Diretrizes de privacidade, tratamento de dados e seguranca da informacao.</p><a href="documentos/politica-lgpd.pdf" target="_blank" class="btn-transparencia-outline"><i class="bi bi-eye"></i> Visualizar</a></div></div>
-          <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="200"><div class="conformidade-card"><div class="conf-header"><div class="conf-icon"><i class="bi bi-journal-check"></i></div><h5>CÃ³digo de Ã‰tica</h5></div><p>PrincÃ­pios de conduta, prevenÃ§Ã£o de conflitos e relacionamento institucional.</p><a href="documentos/codigo-etica.pdf" target="_blank" class="btn-transparencia-outline"><i class="bi bi-eye"></i> Visualizar</a></div></div>
-          <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="250"><div class="conformidade-card"><div class="conf-header"><div class="conf-icon"><i class="bi bi-card-checklist"></i></div><h5>Manual de PrestaÃ§Ã£o</h5></div><p>Fluxos e orientacoes para relatorios, evidencias e aprovacoes internas.</p><a href="documentos/manual-prestacao-contas.pdf" target="_blank" class="btn-transparencia-outline"><i class="bi bi-eye"></i> Visualizar</a></div></div>
-          <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="300"><div class="conformidade-card"><div class="conf-header"><div class="conf-icon"><i class="bi bi-megaphone"></i></div><h5>Canal de DenÃºncia</h5></div><p>Canal confidencial para relatos de irregularidades e descumprimento de normas.</p><a href="mailto:denuncia@coophccar.org.br" class="btn-transparencia"><i class="bi bi-envelope"></i> Enviar Relato</a></div></div>
-          <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="350"><div class="conformidade-card"><div class="conf-header"><div class="conf-icon"><i class="bi bi-patch-check"></i></div><h5>Base Normativa</h5></div><p>Cumprimento da Lei 13.019/2014 e da IN 006/2025-TCM/PA na divulgaÃ§Ã£o ativa das informaÃ§Ãµes.</p><a href="#execucao" class="btn-transparencia"><i class="bi bi-arrow-up-right"></i> Ver InÃ­cio da PÃ¡gina</a></div></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section py-5" style="background:var(--coophccar-green-dark);color:#fff;text-align:center;">
-      <div class="container" data-aos="fade-up">
-        <i class="bi bi-globe2" style="font-size:3rem;color:#d4a017;margin-bottom:16px;display:block;"></i>
-        <h3 style="color:#fff;font-weight:700;margin-bottom:10px;">Portal de Transparência</h3>
-        <p style="color:rgba(255,255,255,0.8);max-width:500px;margin:0 auto 24px;">Acesse o portal completo com todas as informações públicas da cooperativa em conformidade com a legislação.</p>
-        <a href="#" target="_blank" class="btn-transparencia" style="background:#d4a017;padding:14px 36px;font-size:1rem;">
-          <i class="bi bi-box-arrow-up-right"></i> Acessar Portal de Transparência
-        </a>
       </div>
     </section>
 
@@ -318,23 +185,25 @@
         <div class="col-lg-2 col-md-6">
           <h5>Navegação</h5>
           <ul class="footer-links ps-0">
-            <li><a href="index.html">Início</a></li><li><a href="sobre.html">Sobre Nós</a></li>
-            <li><a href="transparencia.html">Transparência</a></li><li><a href="transparencia.html#parcerias">Parcerias Públicas</a></li>
-            <li><a href="transparencia.html#emendas">Emendas</a></li><li><a href="transparencia.html#documentos">Documentos</a></li>
-            <li><a href="transparencia.html#prestacao">Prestação de Contas</a></li><li><a href="transparencia.html#conformidade">Conformidade Legal</a></li>
+            <li><a href="index.html">Início</a></li>
+            <li><a href="sobre.html">Sobre Nós</a></li>
+            <li><a href="transparencia.html">Transparência</a></li>
+            <li><a href="transparencia.html#parcerias">Parcerias Públicas</a></li>
+            <li><a href="transparencia.html#emendas">Emendas</a></li>
+            <li><a href="transparencia.html#documentos">Documentos</a></li>
+            <li><a href="transparencia.html#prestacao">Prestação de Contas</a></li>
             <li><a href="contato.html">Contato</a></li>
           </ul>
         </div>
         <div class="col-lg-3 col-md-6">
-          <h5>Documentos em Destaque</h5>
+          <h5>Seções</h5>
           <ul class="footer-links ps-0">
-            <li><a href="documentos/estatuto-social.pdf" target="_blank">Estatuto Social</a></li>
-            <li><a href="documentos/ata-eleicao.pdf" target="_blank">Ata de Eleição da Diretoria</a></li>
-            <li><a href="documentos/balanco-patrimonial.pdf" target="_blank">Balanço Patrimonial</a></li>
-            <li><a href="documentos/dre.pdf" target="_blank">DRE</a></li>
-            <li><a href="documentos/regulamento-compras.pdf" target="_blank">Regulamento de Compras</a></li>
-            <li><a href="documentos/politica-lgpd.pdf" target="_blank">Política LGPD</a></li>
-            <li><a href="documentos/codigo-etica.pdf" target="_blank">Código de Ética</a></li>
+            <li><a href="#execucao">Execução Financeira</a></li>
+            <li><a href="#planos">Planos de Trabalho</a></li>
+            <li><a href="#parcerias">Parcerias Públicas</a></li>
+            <li><a href="#emendas">Emendas Parlamentares</a></li>
+            <li><a href="#documentos">Documentos</a></li>
+            <li><a href="#prestacao">Prestação de Contas</a></li>
           </ul>
         </div>
         <div class="col-lg-3 col-md-6">
@@ -351,7 +220,7 @@
       </div>
       <div class="footer-bottom">
         <div class="row align-items-center">
-          <div class="col-md-6 text-md-start text-center mb-2 mb-md-0">&copy; <span id="footer-year"></span> COOPHCCAR – Todos os direitos reservados <span class="in-badge">IN 006/2025-TCM/PA</span></div>
+          <div class="col-md-6 text-md-start text-center mb-2 mb-md-0">&copy; <span id="footer-year"></span> COOPHCCAR – Todos os direitos reservados</div>
           <div class="col-md-6 text-md-end text-center">
             <a href="documentos/politica-lgpd.pdf" target="_blank" style="color:#88b894;margin-right:14px;">Política de Privacidade</a>
             <a href="documentos/codigo-etica.pdf" target="_blank" style="color:#88b894;">Código de Ética</a>
@@ -360,6 +229,7 @@
       </div>
     </div>
   </footer>
+
   <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
   <div id="preloader"></div>
 
@@ -371,13 +241,271 @@
   <script src="assets/js/main.js"></script>
   <script>
     document.getElementById('footer-year').textContent = new Date().getFullYear();
-    (function(){const page=location.pathname.split('/').pop().replace('.html','')||'index';document.querySelectorAll('#navmenu a[data-page]').forEach(function(l){if(l.getAttribute('data-page')===page){l.classList.add('active');const p=l.closest('li.dropdown');if(p)p.querySelector(':scope > a').classList.add('active');}});})();
-    function filtrarAno(btn, ano) {
-      document.querySelectorAll('.d-flex button').forEach(b => { b.classList.remove('btn-transparencia'); b.classList.add('btn-transparencia-outline'); });
-      btn.classList.remove('btn-transparencia-outline'); btn.classList.add('btn-transparencia');
+
+    // Nav ativa
+    (function(){
+      const page = location.pathname.split('/').pop().replace('.html','') || 'index';
+      document.querySelectorAll('#navmenu a[data-page]').forEach(function(l){
+        if(l.getAttribute('data-page') === page){
+          l.classList.add('active');
+          const p = l.closest('li.dropdown');
+          if(p) p.querySelector(':scope > a').classList.add('active');
+        }
+      });
+    })();
+
+    // Helpers
+    function moeda(v) {
+      return parseFloat(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
+
+    function statusBadge(status) {
+      if (!status) return '';
+      const s = status.toLowerCase();
+      let cls = 'status-em-execucao';
+      if (s.includes('conclu') || s.includes('ativa')) cls = 'status-concluido';
+      if (s.includes('pend') || s.includes('encerr')) cls = 'status-pendente';
+      return '<span class="status-badge ' + cls + '">' + status + '</span>';
+    }
+
+    function emptyMsg(texto) {
+      return '<div class="col-12 text-center py-4"><p class="text-muted"><i class="bi bi-inbox me-2"></i>' + texto + '</p></div>';
+    }
+
+    // Carregar todos os dados
+    async function loadTransparencia() {
+      try {
+        const res = await fetch('/api/public/transparencia');
+        const data = await res.json();
+        renderResumo(data.resumo, data.execucao);
+        renderExecucaoTable(data.execucao);
+        renderPlanos(data.planos);
+        renderParcerias(data.parcerias);
+        renderEmendas(data.emendas);
+        renderDocumentos(data.documentos);
+        renderPrestacao(data.prestacao);
+      } catch (err) {
+        console.error('Erro ao carregar dados:', err);
+        document.querySelectorAll('.spinner-border').forEach(s => {
+          s.parentElement.innerHTML = '<p class="text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Erro ao carregar dados do servidor.</p>';
+        });
+      }
+    }
+
+    // EXECUÇÃO FINANCEIRA - Resumo
+    function renderResumo(resumo, execucao) {
+      const el = document.getElementById('resumoFinanceiro');
+      if (!resumo || (!resumo.receitas && !resumo.despesas)) {
+        el.innerHTML = emptyMsg('Nenhum registro financeiro cadastrado ainda.');
+        return;
+      }
+      el.innerHTML = `
+        <div class="col-md-4">
+          <div class="transparencia-card text-center">
+            <div class="tc-icon"><i class="bi bi-currency-dollar"></i></div>
+            <h4>Receitas Totais</h4>
+            <p class="fs-3 fw-bold" style="color:#116530;">${moeda(resumo.receitas)}</p>
+            <p>Recursos recebidos</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="transparencia-card text-center">
+            <div class="tc-icon"><i class="bi bi-receipt-cutoff"></i></div>
+            <h4>Despesas Executadas</h4>
+            <p class="fs-3 fw-bold" style="color:#116530;">${moeda(resumo.despesas)}</p>
+            <p>Total de despesas</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="transparencia-card text-center" style="border-top-color:#d4a017;">
+            <div class="tc-icon" style="color:#d4a017;"><i class="bi bi-piggy-bank"></i></div>
+            <h4>Saldo</h4>
+            <p class="fs-3 fw-bold" style="color:#d4a017;">${moeda(resumo.saldo)}</p>
+            <p>Saldo disponível</p>
+          </div>
+        </div>
+      `;
+    }
+
+    // EXECUÇÃO FINANCEIRA - Tabela
+    function renderExecucaoTable(rows) {
+      const el = document.getElementById('execucaoTable');
+      if (!rows || rows.length === 0) {
+        el.innerHTML = '<p class="text-muted text-center py-3">Nenhum registro de execução financeira cadastrado.</p>';
+        return;
+      }
+      let html = `<table class="emendas-table">
+        <thead><tr><th>Tipo</th><th>Descrição</th><th>Valor</th><th>Data</th><th>Categoria</th></tr></thead>
+        <tbody>`;
+      rows.forEach(r => {
+        const tipoBadge = r.tipo === 'Receita'
+          ? '<span class="status-badge status-concluido">Receita</span>'
+          : '<span class="status-badge status-pendente">Despesa</span>';
+        html += `<tr>
+          <td>${tipoBadge}</td>
+          <td>${r.descricao || ''}</td>
+          <td><strong>${moeda(r.valor)}</strong></td>
+          <td>${r.data ? new Date(r.data + 'T00:00:00').toLocaleDateString('pt-BR') : ''}</td>
+          <td>${r.categoria || '—'}</td>
+        </tr>`;
+      });
+      html += '</tbody></table>';
+      el.innerHTML = html;
+    }
+
+    // PLANOS DE TRABALHO
+    function renderPlanos(rows) {
+      const el = document.getElementById('planosContainer');
+      if (!rows || rows.length === 0) {
+        el.innerHTML = emptyMsg('Nenhum plano de trabalho cadastrado ainda.');
+        return;
+      }
+      el.innerHTML = rows.map(r => `
+        <div class="col-lg-4 col-md-6">
+          <div class="transparencia-card">
+            <div class="tc-icon"><i class="bi bi-clipboard2-check-fill"></i></div>
+            <h4>${r.titulo}</h4>
+            <p>${r.descricao || ''}</p>
+            <div class="d-flex align-items-center gap-2 mb-3">
+              ${statusBadge(r.status)}
+              <small class="text-muted">${r.vigencia_inicio || ''} a ${r.vigencia_fim || ''}</small>
+            </div>
+            ${r.arquivo_url ? '<a href="' + r.arquivo_url + '" target="_blank" class="btn-transparencia"><i class="bi bi-eye"></i> Ver Plano</a>' : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // PARCERIAS PÚBLICAS
+    function renderParcerias(rows) {
+      const el = document.getElementById('parceriasContainer');
+      if (!rows || rows.length === 0) {
+        el.innerHTML = emptyMsg('Nenhuma parceria pública cadastrada ainda.');
+        return;
+      }
+      el.innerHTML = rows.map(r => `
+        <div class="col-md-6 col-lg-4">
+          <div class="parceria-card">
+            <div class="parceria-icon"><i class="bi bi-building-check"></i></div>
+            <div class="parceria-content">
+              <h5>${r.parceiro}</h5>
+              <p><strong>${r.instrumento || ''}</strong></p>
+              <p>${r.objeto || ''}</p>
+              ${r.valor ? '<p><strong>Valor:</strong> ' + moeda(r.valor) + '</p>' : ''}
+              <div class="d-flex gap-2 flex-wrap mt-2">
+                ${statusBadge(r.status)}
+                ${r.vigencia_inicio ? '<small class="text-muted">' + r.vigencia_inicio + ' a ' + (r.vigencia_fim || 'vigente') + '</small>' : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // EMENDAS PARLAMENTARES
+    function renderEmendas(rows) {
+      const el = document.getElementById('emendasContainer');
+      if (!rows || rows.length === 0) {
+        el.innerHTML = emptyMsg('Nenhuma emenda parlamentar cadastrada ainda.');
+        return;
+      }
+      let html = `<div class="emendas-table-wrapper"><table class="emendas-table">
+        <thead><tr><th>Proponente</th><th>Objeto</th><th>Valor</th><th>Ano</th><th>Status</th><th>Conta Específica</th></tr></thead>
+        <tbody>`;
+      rows.forEach(r => {
+        html += `<tr>
+          <td><strong>${r.proponente || ''}</strong></td>
+          <td>${r.objeto || ''}</td>
+          <td>${moeda(r.valor)}</td>
+          <td>${r.ano || ''}</td>
+          <td>${statusBadge(r.status)}</td>
+          <td>${r.conta_especifica || '—'}</td>
+        </tr>`;
+      });
+      html += '</tbody></table></div>';
+      el.innerHTML = html;
+    }
+
+    // DOCUMENTOS
+    function renderDocumentos(rows) {
+      const el = document.getElementById('documentosContainer');
+      if (!rows || rows.length === 0) {
+        el.innerHTML = emptyMsg('Nenhum documento cadastrado ainda.');
+        return;
+      }
+      // Filtrar apenas documentos públicos
+      const publicos = rows.filter(r => r.publico !== 'Não');
+      if (publicos.length === 0) {
+        el.innerHTML = emptyMsg('Nenhum documento público disponível.');
+        return;
+      }
+      const icons = {
+        'Institucional': 'bi-file-earmark-text-fill',
+        'Financeiro': 'bi-cash-coin',
+        'Legal': 'bi-shield-check',
+        'Governança': 'bi-building-gear',
+        'Outro': 'bi-file-earmark'
+      };
+      const colors = {
+        'Institucional': '',
+        'Financeiro': 'doc-icon-green',
+        'Legal': 'doc-icon-blue',
+        'Governança': 'doc-icon-orange',
+        'Outro': ''
+      };
+      el.innerHTML = publicos.map(r => {
+        const icon = icons[r.categoria] || 'bi-file-earmark';
+        const color = colors[r.categoria] || '';
+        return `
+          <div class="col-md-6 col-lg-3">
+            <div class="doc-card">
+              <div class="doc-icon ${color}"><i class="bi ${icon}"></i></div>
+              <h5>${r.titulo}</h5>
+              <p>${r.descricao || r.categoria || ''}</p>
+              <div class="doc-actions">
+                <a href="${r.arquivo_url}" target="_blank" class="btn-transparencia"><i class="bi bi-eye"></i> Visualizar</a>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // PRESTAÇÃO DE CONTAS
+    function renderPrestacao(rows) {
+      const el = document.getElementById('prestacaoContainer');
+      if (!rows || rows.length === 0) {
+        el.innerHTML = emptyMsg('Nenhum registro de prestação de contas cadastrado ainda.');
+        return;
+      }
+      const icons = {
+        'Balanço Patrimonial': 'bi-bank2',
+        'DRE': 'bi-graph-up-arrow',
+        'Parecer de Auditoria': 'bi-shield-check',
+        'Parecer do Conselho Fiscal': 'bi-clipboard2-check',
+        'Outro': 'bi-file-earmark-ruled'
+      };
+      el.innerHTML = rows.map(r => {
+        const icon = icons[r.tipo] || 'bi-file-earmark';
+        return `
+          <div class="col-12">
+            <div class="prestacao-item">
+              <div class="prestacao-icon"><i class="bi ${icon}"></i></div>
+              <div class="prestacao-content">
+                <h5>${r.titulo}</h5>
+                <p>${r.descricao || r.tipo + ' — Ref. ' + (r.ano_referencia || '')}</p>
+              </div>
+              <div class="prestacao-actions">
+                <a href="${r.arquivo_url}" target="_blank" class="btn-transparencia"><i class="bi bi-eye"></i> Visualizar</a>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Inicializar
+    loadTransparencia();
   </script>
 </body>
 </html>
-
-

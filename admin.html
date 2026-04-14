@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Painel Admin – COOPHCCAR</title>
+  <link href="assets/img/favicon.png" rel="icon">
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&family=Marcellus:wght@400&display=swap" rel="stylesheet">
+  <link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+  <link href="assets/css/coophccar.css" rel="stylesheet">
+</head>
+<body>
+  <div class="admin-wrapper">
+    <!-- Overlay mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="sidebar-header">
+        <img src="assets/img/coophccar/logo.png" alt="COOPHCCAR" onerror="this.style.display='none'">
+        <div>
+          <h5>COOPHCCAR</h5>
+          <small>Painel Administrativo</small>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">Principal</div>
+        <a href="#" class="active" data-section="dashboard"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+
+        <div class="nav-section">Transparência</div>
+        <a href="#" data-section="execucao"><i class="bi bi-cash-stack"></i> Execução Financeira</a>
+        <a href="#" data-section="planos"><i class="bi bi-clipboard-data"></i> Planos de Trabalho</a>
+        <a href="#" data-section="parcerias"><i class="bi bi-building-check"></i> Parcerias Públicas</a>
+        <a href="#" data-section="emendas"><i class="bi bi-coin"></i> Emendas Parlamentares</a>
+        <a href="#" data-section="documentos"><i class="bi bi-file-earmark-pdf"></i> Documentos</a>
+        <a href="#" data-section="prestacao"><i class="bi bi-clipboard2-check"></i> Prestação de Contas</a>
+
+        <div class="nav-section">Site</div>
+        <a href="#" data-section="noticias"><i class="bi bi-newspaper"></i> Notícias</a>
+        <a href="#" data-section="galeria"><i class="bi bi-images"></i> Galeria</a>
+
+        <div class="nav-section">Sistema</div>
+        <a href="#" data-section="usuarios"><i class="bi bi-people-fill"></i> Usuários</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="btn-logout" onclick="handleLogout()">
+          <i class="bi bi-box-arrow-left"></i> Sair do Painel
+        </button>
+      </div>
+    </aside>
+
+    <!-- Conteúdo principal -->
+    <div class="admin-content">
+      <div class="admin-topbar">
+        <div class="topbar-left">
+          <button class="btn-sidebar-toggle" onclick="toggleSidebar()">
+            <i class="bi bi-list"></i>
+          </button>
+          <div class="topbar-title">
+            <h4 id="pageTitle">Dashboard</h4>
+            <small id="pageSubtitle">Visão geral do sistema</small>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <a href="index.html" class="btn-admin-outline btn-admin-sm" target="_blank">
+            <i class="bi bi-globe"></i> Ver Site
+          </a>
+          <div class="admin-user">
+            <div class="admin-avatar" id="userAvatar">A</div>
+            <span id="userName">Admin</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-main" id="adminMain">
+        <!-- Conteúdo dinâmico aqui -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal genérico para formulários -->
+  <div class="modal fade modal-admin" id="adminModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalTitle">Novo Registro</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn-admin" id="modalSave" onclick="saveRecord()">
+            <i class="bi bi-check-lg"></i> Salvar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal confirmação de exclusão -->
+  <div class="modal fade modal-admin" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header" style="background:#e74c3c;">
+          <h5 class="modal-title">Confirmar Exclusão</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body text-center py-4">
+          <i class="bi bi-exclamation-triangle-fill" style="font-size:3rem;color:#e74c3c;"></i>
+          <p class="mt-3 mb-0">Tem certeza que deseja excluir este registro?</p>
+        </div>
+        <div class="modal-footer justify-content-center">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn-admin btn-admin-danger" id="confirmDelete">
+            <i class="bi bi-trash"></i> Excluir
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // ==========================================
+    // AUTH & INIT
+    // ==========================================
+    const API = '/api';
+    let currentSection = 'dashboard';
+    let currentEditId = null;
+    let currentDeleteId = null;
+    let currentDeleteSection = null;
+
+    function getToken() {
+      return localStorage.getItem('admin_token');
+    }
+
+    function authHeaders() {
+      return {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + getToken()
+      };
+    }
+
+    async function apiFetch(url, options = {}) {
+      options.headers = { ...authHeaders(), ...options.headers };
+      const res = await fetch(API + url, options);
+      if (res.status === 401) {
+        localStorage.removeItem('admin_token');
+        localStorage.removeItem('admin_user');
+        window.location.href = 'login.html';
+        return null;
+      }
+      return res;
+    }
+
+    function handleLogout() {
+      localStorage.removeItem('admin_token');
+      localStorage.removeItem('admin_user');
+      window.location.href = 'login.html';
+    }
+
+    function toggleSidebar() {
+      document.getElementById('adminSidebar').classList.toggle('show');
+      document.getElementById('sidebarOverlay').classList.toggle('show');
+    }
+
+    // Init
+    (function init() {
+      if (!getToken()) {
+        window.location.href = 'login.html';
+        return;
+      }
+      const user = JSON.parse(localStorage.getItem('admin_user') || '{}');
+      document.getElementById('userName').textContent = user.name || 'Admin';
+      document.getElementById('userAvatar').textContent = (user.name || 'A')[0].toUpperCase();
+
+      // Nav click handlers
+      document.querySelectorAll('.sidebar-nav a[data-section]').forEach(link => {
+        link.addEventListener('click', e => {
+          e.preventDefault();
+          document.querySelectorAll('.sidebar-nav a').forEach(l => l.classList.remove('active'));
+          link.classList.add('active');
+          currentSection = link.dataset.section;
+          loadSection(currentSection);
+          // Fechar sidebar em mobile
+          if (window.innerWidth < 992) toggleSidebar();
+        });
+      });
+
+      loadSection('dashboard');
+    })();
+
+    // ==========================================
+    // SECTIONS LOADER
+    // ==========================================
+    function loadSection(section) {
+      const titles = {
+        dashboard: ['Dashboard', 'Visão geral do sistema'],
+        execucao: ['Execução Financeira', 'Gerencie receitas e despesas'],
+        planos: ['Planos de Trabalho', 'Gerencie os planos de trabalho'],
+        parcerias: ['Parcerias Públicas', 'Gerencie convênios e parcerias'],
+        emendas: ['Emendas Parlamentares', 'Gerencie emendas recebidas'],
+        documentos: ['Documentos', 'Gerencie documentos institucionais'],
+        prestacao: ['Prestação de Contas', 'Gerencie balanços e pareceres'],
+        noticias: ['Notícias', 'Gerencie notícias e publicações'],
+        galeria: ['Galeria', 'Gerencie fotos e imagens'],
+        usuarios: ['Usuários', 'Gerencie administradores do sistema']
+      };
+      const [title, subtitle] = titles[section] || ['', ''];
+      document.getElementById('pageTitle').textContent = title;
+      document.getElementById('pageSubtitle').textContent = subtitle;
+
+      const loaders = {
+        dashboard: loadDashboard,
+        execucao: () => loadCrudSection('execucao', 'Execução Financeira', execucaoFields),
+        planos: () => loadCrudSection('planos', 'Plano de Trabalho', planosFields),
+        parcerias: () => loadCrudSection('parcerias', 'Parceria Pública', parceriasFields),
+        emendas: () => loadCrudSection('emendas', 'Emenda Parlamentar', emendasFields),
+        documentos: () => loadCrudSection('documentos', 'Documento', documentosFields),
+        prestacao: () => loadCrudSection('prestacao', 'Prestação de Contas', prestacaoFields),
+        noticias: () => loadCrudSection('noticias', 'Notícia', noticiasFields),
+        galeria: () => loadCrudSection('galeria', 'Imagem da Galeria', galeriaFields),
+        usuarios: () => loadCrudSection('usuarios', 'Usuário', usuariosFields)
+      };
+
+      if (loaders[section]) loaders[section]();
+    }
+
+    // ==========================================
+    // DASHBOARD
+    // ==========================================
+    async function loadDashboard() {
+      const main = document.getElementById('adminMain');
+      main.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-success"></div></div>';
+
+      try {
+        const res = await apiFetch('/admin/stats');
+        const stats = res ? await res.json() : {};
+
+        main.innerHTML = `
+          <div class="row g-4 mb-4">
+            <div class="col-sm-6 col-xl-3">
+              <div class="stat-card">
+                <div class="stat-icon bg-green"><i class="bi bi-cash-stack"></i></div>
+                <div class="stat-info"><h3>${stats.execucao || 0}</h3><p>Registros Financeiros</p></div>
+              </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+              <div class="stat-card">
+                <div class="stat-icon bg-gold"><i class="bi bi-coin"></i></div>
+                <div class="stat-info"><h3>${stats.emendas || 0}</h3><p>Emendas Parlamentares</p></div>
+              </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+              <div class="stat-card">
+                <div class="stat-icon bg-blue"><i class="bi bi-file-earmark-pdf"></i></div>
+                <div class="stat-info"><h3>${stats.documentos || 0}</h3><p>Documentos</p></div>
+              </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+              <div class="stat-card">
+                <div class="stat-icon bg-red"><i class="bi bi-building-check"></i></div>
+                <div class="stat-info"><h3>${stats.parcerias || 0}</h3><p>Parcerias Públicas</p></div>
+              </div>
+            </div>
+          </div>
+          <div class="row g-4">
+            <div class="col-lg-6">
+              <div class="admin-panel">
+                <div class="panel-header"><h5><i class="bi bi-clock-history me-2"></i>Atividade Recente</h5></div>
+                <div class="panel-body" id="recentActivity">
+                  <p class="text-muted mb-0">Nenhuma atividade recente.</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="admin-panel">
+                <div class="panel-header"><h5><i class="bi bi-lightning-fill me-2"></i>Ações Rápidas</h5></div>
+                <div class="panel-body">
+                  <div class="d-flex flex-wrap gap-2">
+                    <button class="btn-admin" onclick="document.querySelector('[data-section=execucao]').click()">
+                      <i class="bi bi-plus-lg"></i> Nova Execução
+                    </button>
+                    <button class="btn-admin btn-admin-warning" onclick="document.querySelector('[data-section=emendas]').click()">
+                      <i class="bi bi-plus-lg"></i> Nova Emenda
+                    </button>
+                    <button class="btn-admin btn-admin-outline" onclick="document.querySelector('[data-section=documentos]').click()">
+                      <i class="bi bi-plus-lg"></i> Novo Documento
+                    </button>
+                    <button class="btn-admin btn-admin-outline" onclick="document.querySelector('[data-section=parcerias]').click()">
+                      <i class="bi bi-plus-lg"></i> Nova Parceria
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      } catch (err) {
+        main.innerHTML = '<div class="alert alert-danger">Erro ao carregar dashboard.</div>';
+      }
+    }
+
+    // ==========================================
+    // FIELD DEFINITIONS
+    // ==========================================
+    const execucaoFields = [
+      { name: 'tipo', label: 'Tipo', type: 'select', options: ['Receita', 'Despesa'], required: true },
+      { name: 'descricao', label: 'Descrição', type: 'text', required: true },
+      { name: 'valor', label: 'Valor (R$)', type: 'number', required: true },
+      { name: 'data', label: 'Data', type: 'date', required: true },
+      { name: 'categoria', label: 'Categoria', type: 'text' },
+      { name: 'comprovante_url', label: 'Link Comprovante', type: 'text' },
+      { name: 'observacoes', label: 'Observações', type: 'textarea' }
+    ];
+
+    const planosFields = [
+      { name: 'titulo', label: 'Título', type: 'text', required: true },
+      { name: 'descricao', label: 'Descrição', type: 'textarea', required: true },
+      { name: 'vigencia_inicio', label: 'Início da Vigência', type: 'date', required: true },
+      { name: 'vigencia_fim', label: 'Fim da Vigência', type: 'date', required: true },
+      { name: 'status', label: 'Status', type: 'select', options: ['Em execução', 'Concluído', 'Pendente'], required: true },
+      { name: 'arquivo_url', label: 'Link do Arquivo', type: 'text' }
+    ];
+
+    const parceriasFields = [
+      { name: 'parceiro', label: 'Parceiro/Órgão', type: 'text', required: true },
+      { name: 'instrumento', label: 'Instrumento', type: 'text', required: true },
+      { name: 'objeto', label: 'Objeto', type: 'textarea', required: true },
+      { name: 'valor', label: 'Valor (R$)', type: 'number' },
+      { name: 'vigencia_inicio', label: 'Início', type: 'date' },
+      { name: 'vigencia_fim', label: 'Fim', type: 'date' },
+      { name: 'status', label: 'Status', type: 'select', options: ['Ativa', 'Encerrada', 'Em análise'], required: true }
+    ];
+
+    const emendasFields = [
+      { name: 'proponente', label: 'Proponente/Parlamentar', type: 'text', required: true },
+      { name: 'objeto', label: 'Objeto', type: 'textarea', required: true },
+      { name: 'valor', label: 'Valor (R$)', type: 'number', required: true },
+      { name: 'ano', label: 'Ano', type: 'number', required: true },
+      { name: 'status', label: 'Status', type: 'select', options: ['Em execução', 'Concluído', 'Pendente'], required: true },
+      { name: 'conta_especifica', label: 'Conta Específica', type: 'text' },
+      { name: 'comprovante_url', label: 'Link Comprovante', type: 'text' }
+    ];
+
+    const documentosFields = [
+      { name: 'titulo', label: 'Título', type: 'text', required: true },
+      { name: 'categoria', label: 'Categoria', type: 'select', options: ['Institucional', 'Financeiro', 'Legal', 'Governança', 'Outro'], required: true },
+      { name: 'descricao', label: 'Descrição', type: 'textarea' },
+      { name: 'arquivo_url', label: 'Link/Caminho do Arquivo', type: 'text', required: true },
+      { name: 'publico', label: 'Visível no Site?', type: 'select', options: ['Sim', 'Não'], required: true }
+    ];
+
+    const prestacaoFields = [
+      { name: 'titulo', label: 'Título', type: 'text', required: true },
+      { name: 'tipo', label: 'Tipo', type: 'select', options: ['Balanço Patrimonial', 'DRE', 'Parecer de Auditoria', 'Parecer do Conselho Fiscal', 'Outro'], required: true },
+      { name: 'ano_referencia', label: 'Ano de Referência', type: 'number', required: true },
+      { name: 'descricao', label: 'Descrição', type: 'textarea' },
+      { name: 'arquivo_url', label: 'Link do Arquivo', type: 'text', required: true }
+    ];
+
+    const noticiasFields = [
+      { name: 'titulo', label: 'Título', type: 'text', required: true },
+      { name: 'resumo', label: 'Resumo', type: 'textarea', required: true },
+      { name: 'conteudo', label: 'Conteúdo', type: 'textarea' },
+      { name: 'imagem_url', label: 'URL da Imagem', type: 'text' },
+      { name: 'publicado', label: 'Publicado?', type: 'select', options: ['Sim', 'Não'], required: true }
+    ];
+
+    const galeriaFields = [
+      { name: 'titulo', label: 'Título', type: 'text', required: true },
+      { name: 'descricao', label: 'Descrição', type: 'text' },
+      { name: 'imagem_url', label: 'URL/Caminho da Imagem', type: 'text', required: true },
+      { name: 'album', label: 'Álbum', type: 'text' }
+    ];
+
+    const usuariosFields = [
+      { name: 'name', label: 'Nome', type: 'text', required: true },
+      { name: 'email', label: 'E-mail', type: 'email', required: true },
+      { name: 'password', label: 'Senha', type: 'password', required: true },
+      { name: 'role', label: 'Perfil', type: 'select', options: ['admin', 'editor'], required: true }
+    ];
+
+    // Column definitions for tables
+    const sectionColumns = {
+      execucao: ['tipo', 'descricao', 'valor', 'data', 'categoria'],
+      planos: ['titulo', 'vigencia_inicio', 'vigencia_fim', 'status'],
+      parcerias: ['parceiro', 'instrumento', 'valor', 'status'],
+      emendas: ['proponente', 'valor', 'ano', 'status'],
+      documentos: ['titulo', 'categoria', 'publico'],
+      prestacao: ['titulo', 'tipo', 'ano_referencia'],
+      noticias: ['titulo', 'publicado', 'created_at'],
+      galeria: ['titulo', 'album'],
+      usuarios: ['name', 'email', 'role']
+    };
+
+    // ==========================================
+    // CRUD GENÉRICO
+    // ==========================================
+    let currentFields = [];
+    let currentSectionName = '';
+
+    async function loadCrudSection(section, label, fields) {
+      currentSectionName = section;
+      currentFields = fields;
+      const main = document.getElementById('adminMain');
+      main.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-success"></div></div>';
+
+      try {
+        const res = await apiFetch(`/admin/${section}`);
+        const data = res ? await res.json() : [];
+        const cols = sectionColumns[section] || fields.map(f => f.name).slice(0, 4);
+
+        let tableHead = cols.map(c => {
+          const f = fields.find(f => f.name === c);
+          return `<th>${f ? f.label : c}</th>`;
+        }).join('');
+
+        let tableBody = '';
+        if (Array.isArray(data) && data.length > 0) {
+          tableBody = data.map(row => {
+            let cells = cols.map(c => {
+              let val = row[c] ?? '';
+              if (c === 'valor' && val) val = 'R$ ' + parseFloat(val).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+              if (c === 'status') val = `<span class="status-badge status-${statusClass(val)}">${val}</span>`;
+              return `<td>${val}</td>`;
+            }).join('');
+            return `<tr>
+              ${cells}
+              <td class="text-end">
+                <button class="btn-admin btn-admin-sm me-1" onclick="editRecord('${section}', ${row.id})"><i class="bi bi-pencil"></i></button>
+                <button class="btn-admin btn-admin-sm btn-admin-danger" onclick="deleteRecord('${section}', ${row.id})"><i class="bi bi-trash"></i></button>
+              </td>
+            </tr>`;
+          }).join('');
+        } else {
+          tableBody = `<tr><td colspan="${cols.length + 1}" class="text-center text-muted py-4">Nenhum registro encontrado.</td></tr>`;
+        }
+
+        main.innerHTML = `
+          <div class="admin-panel">
+            <div class="panel-header">
+              <h5><i class="bi bi-table me-2"></i>${label}</h5>
+              <button class="btn-admin" onclick="openNewRecord('${section}', '${label}')">
+                <i class="bi bi-plus-lg"></i> Novo
+              </button>
+            </div>
+            <div class="panel-body">
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead><tr>${tableHead}<th class="text-end">Ações</th></tr></thead>
+                  <tbody>${tableBody}</tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `;
+      } catch (err) {
+        main.innerHTML = '<div class="alert alert-danger">Erro ao carregar dados.</div>';
+      }
+    }
+
+    function statusClass(status) {
+      if (!status) return '';
+      const s = status.toLowerCase();
+      if (s.includes('execu') || s.includes('ativa') || s.includes('análise')) return 'em-execucao';
+      if (s.includes('conclu') || s.includes('sim')) return 'concluido';
+      if (s.includes('pend') || s.includes('não') || s.includes('encerr')) return 'pendente';
+      return 'em-execucao';
+    }
+
+    function buildForm(fields, data = {}) {
+      return fields.map(f => {
+        if (f.name === 'password' && data.id) {
+          return `<div class="mb-3">
+            <label class="form-label fw-bold">${f.label} <small class="text-muted">(deixe em branco para manter)</small></label>
+            <input type="password" class="form-control" name="${f.name}" placeholder="Nova senha">
+          </div>`;
+        }
+        const val = data[f.name] || '';
+        const req = f.required ? 'required' : '';
+        if (f.type === 'textarea') {
+          return `<div class="mb-3">
+            <label class="form-label fw-bold">${f.label}</label>
+            <textarea class="form-control" name="${f.name}" rows="3" ${req}>${val}</textarea>
+          </div>`;
+        }
+        if (f.type === 'select') {
+          const opts = f.options.map(o => `<option value="${o}" ${val === o ? 'selected' : ''}>${o}</option>`).join('');
+          return `<div class="mb-3">
+            <label class="form-label fw-bold">${f.label}</label>
+            <select class="form-select" name="${f.name}" ${req}><option value="">Selecione...</option>${opts}</select>
+          </div>`;
+        }
+        return `<div class="mb-3">
+          <label class="form-label fw-bold">${f.label}</label>
+          <input type="${f.type}" class="form-control" name="${f.name}" value="${val}" ${req}>
+        </div>`;
+      }).join('');
+    }
+
+    function openNewRecord(section, label) {
+      currentEditId = null;
+      currentSectionName = section;
+      const fields = getFieldsForSection(section);
+      currentFields = fields;
+      document.getElementById('modalTitle').textContent = `Novo ${label}`;
+      document.getElementById('modalBody').innerHTML = `<form id="recordForm">${buildForm(fields)}</form>`;
+      new bootstrap.Modal(document.getElementById('adminModal')).show();
+    }
+
+    async function editRecord(section, id) {
+      currentEditId = id;
+      currentSectionName = section;
+      const fields = getFieldsForSection(section);
+      currentFields = fields;
+
+      try {
+        const res = await apiFetch(`/admin/${section}/${id}`);
+        const data = res ? await res.json() : {};
+        document.getElementById('modalTitle').textContent = 'Editar Registro';
+        document.getElementById('modalBody').innerHTML = `<form id="recordForm">${buildForm(fields, data)}</form>`;
+        new bootstrap.Modal(document.getElementById('adminModal')).show();
+      } catch (err) {
+        alert('Erro ao carregar registro.');
+      }
+    }
+
+    async function saveRecord() {
+      const form = document.getElementById('recordForm');
+      const formData = {};
+      currentFields.forEach(f => {
+        const el = form.querySelector(`[name="${f.name}"]`);
+        if (el) {
+          const val = el.value.trim();
+          if (f.name === 'password' && currentEditId && !val) return;
+          formData[f.name] = val;
+        }
+      });
+
+      const btn = document.getElementById('modalSave');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+      try {
+        const url = currentEditId
+          ? `/admin/${currentSectionName}/${currentEditId}`
+          : `/admin/${currentSectionName}`;
+        const method = currentEditId ? 'PUT' : 'POST';
+
+        const res = await apiFetch(url, {
+          method,
+          body: JSON.stringify(formData)
+        });
+
+        if (res && res.ok) {
+          bootstrap.Modal.getInstance(document.getElementById('adminModal')).hide();
+          loadSection(currentSectionName);
+        } else {
+          const err = res ? await res.json() : {};
+          alert(err.error || 'Erro ao salvar.');
+        }
+      } catch (err) {
+        alert('Erro de conexão.');
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-check-lg"></i> Salvar';
+    }
+
+    function deleteRecord(section, id) {
+      currentDeleteId = id;
+      currentDeleteSection = section;
+      const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+      document.getElementById('confirmDelete').onclick = async () => {
+        try {
+          const res = await apiFetch(`/admin/${currentDeleteSection}/${currentDeleteId}`, { method: 'DELETE' });
+          if (res && res.ok) {
+            modal.hide();
+            loadSection(currentDeleteSection);
+          } else {
+            alert('Erro ao excluir.');
+          }
+        } catch (err) {
+          alert('Erro de conexão.');
+        }
+      };
+      modal.show();
+    }
+
+    function getFieldsForSection(section) {
+      const map = {
+        execucao: execucaoFields,
+        planos: planosFields,
+        parcerias: parceriasFields,
+        emendas: emendasFields,
+        documentos: documentosFields,
+        prestacao: prestacaoFields,
+        noticias: noticiasFields,
+        galeria: galeriaFields,
+        usuarios: usuariosFields
+      };
+      return map[section] || [];
+    }
+  </script>
+</body>
+</html>

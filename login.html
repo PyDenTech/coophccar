@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Login Administrativo – COOPHCCAR</title>
+  <meta name="description" content="Acesso administrativo ao painel da COOPHCCAR.">
+  <link href="assets/img/favicon.png" rel="icon">
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&family=Marcellus:wght@400&display=swap" rel="stylesheet">
+  <link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+  <link href="assets/css/coophccar.css" rel="stylesheet">
+</head>
+<body>
+  <div class="login-page-wrapper">
+    <div class="login-card">
+      <div class="login-header">
+        <img src="assets/img/coophccar/logo.png" alt="COOPHCCAR" onerror="this.style.display='none'">
+        <h2>Painel Administrativo</h2>
+        <p>COOPHCCAR – Cooperativa dos Produtores e Horticultores</p>
+      </div>
+      <div class="login-body">
+        <div class="login-error" id="loginError">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          <span id="loginErrorMsg">Credenciais inválidas.</span>
+        </div>
+        <form id="loginForm" onsubmit="return handleLogin(event)">
+          <div class="form-group">
+            <label for="email"><i class="bi bi-envelope me-1"></i> E-mail</label>
+            <input type="email" class="form-control" id="email" placeholder="admin@coophccar.org.br" required>
+          </div>
+          <div class="form-group">
+            <label for="password"><i class="bi bi-key me-1"></i> Senha</label>
+            <div class="position-relative">
+              <input type="password" class="form-control" id="password" placeholder="Digite sua senha" required>
+              <button type="button" class="btn position-absolute end-0 top-0 h-100 px-3" style="color:#888;" onclick="togglePassword()">
+                <i class="bi bi-eye" id="togglePwdIcon"></i>
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn-login" id="btnLogin">
+            <i class="bi bi-box-arrow-in-right"></i> Entrar
+          </button>
+        </form>
+      </div>
+      <div class="login-footer">
+        <a href="index.html"><i class="bi bi-arrow-left"></i> Voltar ao site</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function togglePassword() {
+      const pwd = document.getElementById('password');
+      const icon = document.getElementById('togglePwdIcon');
+      if (pwd.type === 'password') {
+        pwd.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+      } else {
+        pwd.type = 'password';
+        icon.className = 'bi bi-eye';
+      }
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const btn = document.getElementById('btnLogin');
+      const errorBox = document.getElementById('loginError');
+      const errorMsg = document.getElementById('loginErrorMsg');
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Entrando...';
+      errorBox.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (res.ok && data.token) {
+          localStorage.setItem('admin_token', data.token);
+          localStorage.setItem('admin_user', JSON.stringify(data.user));
+          window.location.href = 'admin.html';
+        } else {
+          errorMsg.textContent = data.error || 'Credenciais inválidas.';
+          errorBox.style.display = 'block';
+        }
+      } catch (err) {
+        errorMsg.textContent = 'Erro de conexão com o servidor.';
+        errorBox.style.display = 'block';
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Entrar';
+    }
+
+    // Se já logado, redireciona
+    if (localStorage.getItem('admin_token')) {
+      window.location.href = 'admin.html';
+    }
+  </script>
+</body>
+</html>
