@@ -30,7 +30,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
           script: |
-            cd ${{ secrets.APP_DIR || '/var/www/coophccar' }}
+            cd ${{ secrets.APP_DIR || '/home/ubuntu/coophccar' }}
             git pull origin main
             npm ci --production
             pm2 restart coophccar || pm2 start server.js --name coophccar
