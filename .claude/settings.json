@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e ':*)",
+      "Bash(curl -s http://localhost:3000/login.html)",
+      "Bash(curl -s http://localhost:3000/assets/css/coophccar.css)"
+    ]
+  }
+}

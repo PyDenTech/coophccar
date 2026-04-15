@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 const Database = require('better-sqlite3');
 
 const app = express();
-const PORT = process.env.PORT || 13000;
+const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'coophccar-admin-secret-2025';
 
 // ==========================================
@@ -30,8 +30,10 @@ function initDatabase() {
       name TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
-      role TEXT DEFAULT 'admin',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      role TEXT DEFAULT 'editor',
+      active INTEGER DEFAULT 1,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE TABLE IF NOT EXISTS execucao (
@@ -129,12 +131,26 @@ function initDatabase() {
     );
   `);
 
+  // Adicionar coluna active se não existir (migração)
+  try {
+    db.prepare("SELECT active FROM users LIMIT 1").get();
+  } catch (e) {
+    db.exec("ALTER TABLE users ADD COLUMN active INTEGER DEFAULT 1");
+  }
+
+  // Adicionar coluna updated_at em users se não existir
+  try {
+    db.prepare("SELECT updated_at FROM users LIMIT 1").get();
+  } catch (e) {
+    db.exec("ALTER TABLE users ADD COLUMN updated_at DATETIME DEFAULT NULL");
+  }
+
   // Criar admin padrão se não existir
   const adminExists = db.prepare('SELECT id FROM users WHERE email = ?').get('admin@coophccar.org.br');
   if (!adminExists) {
     const hash = bcrypt.hashSync('admin123', 10);
-    db.prepare('INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)').run(
-      'Administrador', 'admin@coophccar.org.br', hash, 'admin'
+    db.prepare('INSERT INTO users (name, email, password, role, active) VALUES (?, ?, ?, ?, ?)').run(
+      'Administrador', 'admin@coophccar.org.br', hash, 'admin', 1
     );
     console.log('Admin padrão criado: admin@coophccar.org.br / admin123');
   }
@@ -153,11 +169,24 @@ function authMiddleware(req, res, next) {
   try {
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
+    // Verificar se o usuário ainda existe e está ativo
+    const user = db.prepare('SELECT id, name, email, role, active FROM users WHERE id = ?').get(decoded.id);
+    if (!user || !user.active) {
+      return res.status(401).json({ error: 'Usuário desativado ou não encontrado.' });
+    }
+    req.user = { ...decoded, role: user.role, name: user.name };
     next();
   } catch (err) {
     return res.status(401).json({ error: 'Token inválido ou expirado.' });
   }
+}
+
+// Middleware: somente admin
+function adminOnly(req, res, next) {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Acesso restrito a administradores.' });
+  }
+  next();
 }
 
 // ==========================================
@@ -172,6 +201,10 @@ app.post('/api/auth/login', (req, res) => {
   const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
   if (!user) {
     return res.status(401).json({ error: 'Credenciais inválidas.' });
+  }
+
+  if (!user.active) {
+    return res.status(401).json({ error: 'Conta desativada. Contate o administrador.' });
   }
 
   if (!bcrypt.compareSync(password, user.password)) {
@@ -190,6 +223,33 @@ app.post('/api/auth/login', (req, res) => {
   });
 });
 
+// Verificar token (para o frontend validar a sessão)
+app.get('/api/auth/verify', authMiddleware, (req, res) => {
+  const user = db.prepare('SELECT id, name, email, role, active FROM users WHERE id = ?').get(req.user.id);
+  if (!user || !user.active) {
+    return res.status(401).json({ error: 'Sessão inválida.' });
+  }
+  res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+});
+
+// Alterar própria senha
+app.put('/api/auth/password', authMiddleware, (req, res) => {
+  const { current_password, new_password } = req.body;
+  if (!current_password || !new_password) {
+    return res.status(400).json({ error: 'Senha atual e nova senha são obrigatórias.' });
+  }
+  if (new_password.length < 6) {
+    return res.status(400).json({ error: 'A nova senha deve ter pelo menos 6 caracteres.' });
+  }
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+  if (!bcrypt.compareSync(current_password, user.password)) {
+    return res.status(400).json({ error: 'Senha atual incorreta.' });
+  }
+  const hash = bcrypt.hashSync(new_password, 10);
+  db.prepare('UPDATE users SET password = ?, updated_at = ? WHERE id = ?').run(hash, new Date().toISOString(), req.user.id);
+  res.json({ success: true });
+});
+
 // ==========================================
 // PUBLIC API (transparência - sem autenticação)
 // ==========================================
@@ -200,7 +260,6 @@ app.get('/api/public/transparencia', (req, res) => {
   publicTables.forEach(table => {
     data[table] = db.prepare(`SELECT * FROM ${table} ORDER BY id DESC`).all();
   });
-  // Resumo financeiro
   const receitas = db.prepare("SELECT COALESCE(SUM(valor),0) as total FROM execucao WHERE tipo='Receita'").get().total;
   const despesas = db.prepare("SELECT COALESCE(SUM(valor),0) as total FROM execucao WHERE tipo='Despesa'").get().total;
   data.resumo = { receitas, despesas, saldo: receitas - despesas };
@@ -235,10 +294,10 @@ app.get('/api/admin/stats', (req, res) => {
   res.json(stats);
 });
 
-// CRUD genérico para todas as tabelas de transparência
+// Tabelas e colunas permitidas
 const allowedTables = ['execucao', 'planos', 'parcerias', 'emendas', 'documentos', 'prestacao', 'noticias', 'galeria', 'usuarios'];
+const adminOnlyTables = ['usuarios'];
 
-// Colunas permitidas por tabela (whitelist)
 const tableColumns = {
   execucao: ['tipo', 'descricao', 'valor', 'data', 'categoria', 'comprovante_url', 'observacoes'],
   planos: ['titulo', 'descricao', 'vigencia_inicio', 'vigencia_fim', 'status', 'arquivo_url'],
@@ -248,17 +307,26 @@ const tableColumns = {
   prestacao: ['titulo', 'tipo', 'ano_referencia', 'descricao', 'arquivo_url'],
   noticias: ['titulo', 'resumo', 'conteudo', 'imagem_url', 'publicado'],
   galeria: ['titulo', 'descricao', 'imagem_url', 'album'],
-  usuarios: ['name', 'email', 'password', 'role']
+  usuarios: ['name', 'email', 'password', 'role', 'active']
 };
 
-// LIST
-app.get('/api/admin/:table', (req, res) => {
+// Middleware de permissão por tabela
+function checkTablePermission(req, res, next) {
   const { table } = req.params;
-  if (!allowedTables.includes(table)) return res.status(400).json({ error: 'Tabela inválida.' });
+  if (!allowedTables.includes(table)) {
+    return res.status(400).json({ error: 'Tabela inválida.' });
+  }
+  if (adminOnlyTables.includes(table) && req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Acesso restrito a administradores.' });
+  }
+  next();
+}
 
+// LIST
+app.get('/api/admin/:table', checkTablePermission, (req, res) => {
+  const { table } = req.params;
   const dbTable = table === 'usuarios' ? 'users' : table;
   const rows = db.prepare(`SELECT * FROM ${dbTable} ORDER BY id DESC`).all();
-
   if (table === 'usuarios') {
     rows.forEach(r => delete r.password);
   }
@@ -266,23 +334,18 @@ app.get('/api/admin/:table', (req, res) => {
 });
 
 // GET ONE
-app.get('/api/admin/:table/:id', (req, res) => {
+app.get('/api/admin/:table/:id', checkTablePermission, (req, res) => {
   const { table, id } = req.params;
-  if (!allowedTables.includes(table)) return res.status(400).json({ error: 'Tabela inválida.' });
-
   const dbTable = table === 'usuarios' ? 'users' : table;
   const row = db.prepare(`SELECT * FROM ${dbTable} WHERE id = ?`).get(id);
   if (!row) return res.status(404).json({ error: 'Registro não encontrado.' });
-
   if (table === 'usuarios') delete row.password;
   res.json(row);
 });
 
 // CREATE
-app.post('/api/admin/:table', (req, res) => {
+app.post('/api/admin/:table', checkTablePermission, (req, res) => {
   const { table } = req.params;
-  if (!allowedTables.includes(table)) return res.status(400).json({ error: 'Tabela inválida.' });
-
   const dbTable = table === 'usuarios' ? 'users' : table;
   const allowed = tableColumns[table];
   const data = {};
@@ -293,8 +356,18 @@ app.post('/api/admin/:table', (req, res) => {
     }
   });
 
-  if (table === 'usuarios' && data.password) {
+  // Validações para usuários
+  if (table === 'usuarios') {
+    if (!data.name || !data.email || !data.password) {
+      return res.status(400).json({ error: 'Nome, e-mail e senha são obrigatórios.' });
+    }
+    if (data.password.length < 6) {
+      return res.status(400).json({ error: 'A senha deve ter pelo menos 6 caracteres.' });
+    }
     data.password = bcrypt.hashSync(data.password, 10);
+    if (!data.active) data.active = 1;
+    else data.active = data.active === '1' || data.active === 'Sim' ? 1 : 0;
+    if (!['admin', 'editor'].includes(data.role)) data.role = 'editor';
   }
 
   const cols = Object.keys(data);
@@ -303,34 +376,58 @@ app.post('/api/admin/:table', (req, res) => {
 
   try {
     const result = db.prepare(`INSERT INTO ${dbTable} (${cols.join(', ')}) VALUES (${placeholders})`).run(...vals);
-    res.json({ id: result.lastInsertRowid, ...data });
+    const resp = { id: result.lastInsertRowid, ...data };
+    delete resp.password;
+    res.json(resp);
   } catch (err) {
     if (err.message.includes('UNIQUE')) {
-      return res.status(400).json({ error: 'Registro duplicado (e-mail já cadastrado).' });
+      return res.status(400).json({ error: 'E-mail já cadastrado.' });
     }
-    res.status(500).json({ error: 'Erro ao salvar.' });
+    res.status(500).json({ error: 'Erro ao salvar: ' + err.message });
   }
 });
 
 // UPDATE
-app.put('/api/admin/:table/:id', (req, res) => {
+app.put('/api/admin/:table/:id', checkTablePermission, (req, res) => {
   const { table, id } = req.params;
-  if (!allowedTables.includes(table)) return res.status(400).json({ error: 'Tabela inválida.' });
-
   const dbTable = table === 'usuarios' ? 'users' : table;
   const allowed = tableColumns[table];
   const data = {};
 
   allowed.forEach(col => {
-    if (req.body[col] !== undefined && req.body[col] !== '') {
+    if (req.body[col] !== undefined) {
+      // Para password, só incluir se não vazio
+      if (col === 'password' && req.body[col] === '') return;
       data[col] = req.body[col];
     }
   });
 
-  if (table === 'usuarios' && data.password) {
-    data.password = bcrypt.hashSync(data.password, 10);
-  } else if (table === 'usuarios') {
-    delete data.password;
+  if (table === 'usuarios') {
+    // Impedir editor de alterar role ou active
+    if (req.user.role !== 'admin') {
+      delete data.role;
+      delete data.active;
+    }
+    if (data.password) {
+      if (data.password.length < 6) {
+        return res.status(400).json({ error: 'A senha deve ter pelo menos 6 caracteres.' });
+      }
+      data.password = bcrypt.hashSync(data.password, 10);
+    }
+    if (data.active !== undefined) {
+      data.active = data.active === '1' || data.active === 'Sim' || data.active === 1 ? 1 : 0;
+    }
+    if (data.role && !['admin', 'editor'].includes(data.role)) {
+      data.role = 'editor';
+    }
+    // Impedir desativar o próprio usuário
+    if (parseInt(id) === req.user.id && data.active === 0) {
+      return res.status(400).json({ error: 'Você não pode desativar sua própria conta.' });
+    }
+    // Impedir remover o próprio admin
+    if (parseInt(id) === req.user.id && data.role && data.role !== 'admin') {
+      return res.status(400).json({ error: 'Você não pode rebaixar seu próprio perfil.' });
+    }
   }
 
   if (Object.keys(data).length === 0) {
@@ -343,7 +440,9 @@ app.put('/api/admin/:table/:id', (req, res) => {
 
   try {
     db.prepare(`UPDATE ${dbTable} SET ${sets} WHERE id = ?`).run(...vals);
-    res.json({ id: parseInt(id), ...data });
+    const resp = { id: parseInt(id), ...data };
+    delete resp.password;
+    res.json(resp);
   } catch (err) {
     if (err.message.includes('UNIQUE')) {
       return res.status(400).json({ error: 'E-mail já cadastrado.' });
@@ -353,15 +452,20 @@ app.put('/api/admin/:table/:id', (req, res) => {
 });
 
 // DELETE
-app.delete('/api/admin/:table/:id', (req, res) => {
+app.delete('/api/admin/:table/:id', checkTablePermission, (req, res) => {
   const { table, id } = req.params;
-  if (!allowedTables.includes(table)) return res.status(400).json({ error: 'Tabela inválida.' });
-
   const dbTable = table === 'usuarios' ? 'users' : table;
 
-  // Impedir exclusão do próprio usuário
-  if (table === 'usuarios' && parseInt(id) === req.user.id) {
-    return res.status(400).json({ error: 'Você não pode excluir seu próprio usuário.' });
+  if (table === 'usuarios') {
+    if (parseInt(id) === req.user.id) {
+      return res.status(400).json({ error: 'Você não pode excluir seu próprio usuário.' });
+    }
+    // Impedir excluir o último admin
+    const adminCount = db.prepare("SELECT COUNT(*) as c FROM users WHERE role='admin' AND active=1").get().c;
+    const target = db.prepare('SELECT role FROM users WHERE id = ?').get(id);
+    if (target && target.role === 'admin' && adminCount <= 1) {
+      return res.status(400).json({ error: 'Não é possível excluir o último administrador.' });
+    }
   }
 
   db.prepare(`DELETE FROM ${dbTable} WHERE id = ?`).run(id);

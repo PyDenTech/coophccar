@@ -13,7 +13,13 @@
   <link href="assets/css/coophccar.css" rel="stylesheet">
 </head>
 <body>
-  <div class="admin-wrapper">
+  <!-- Tela de carregamento enquanto verifica sessão -->
+  <div id="authLoader" style="position:fixed;inset:0;background:#f4f9f6;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+    <div class="spinner-border text-success mb-3" style="width:3rem;height:3rem;"></div>
+    <p style="color:#0a4520;font-weight:600;">Verificando sessão...</p>
+  </div>
+
+  <div class="admin-wrapper" style="display:none;" id="adminApp">
     <!-- Overlay mobile -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
@@ -42,8 +48,8 @@
         <a href="#" data-section="noticias"><i class="bi bi-newspaper"></i> Notícias</a>
         <a href="#" data-section="galeria"><i class="bi bi-images"></i> Galeria</a>
 
-        <div class="nav-section">Sistema</div>
-        <a href="#" data-section="usuarios"><i class="bi bi-people-fill"></i> Usuários</a>
+        <div class="nav-section nav-section-admin" style="display:none;">Sistema</div>
+        <a href="#" data-section="usuarios" class="nav-link-admin" style="display:none;"><i class="bi bi-people-fill"></i> Usuários</a>
       </nav>
       <div class="sidebar-footer">
         <button class="btn-logout" onclick="handleLogout()">
@@ -68,10 +74,19 @@
           <a href="index.html" class="btn-admin-outline btn-admin-sm" target="_blank">
             <i class="bi bi-globe"></i> Ver Site
           </a>
-          <div class="admin-user">
-            <div class="admin-avatar" id="userAvatar">A</div>
-            <span id="userName">Admin</span>
+          <div class="dropdown">
+            <button class="admin-user" type="button" data-bs-toggle="dropdown" style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:8px;">
+              <div class="admin-avatar" id="userAvatar">A</div>
+              <span id="userName">Admin</span>
+              <i class="bi bi-chevron-down" style="font-size:0.7rem;"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="#" onclick="openChangePassword(); return false;"><i class="bi bi-key me-2"></i>Alterar Senha</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-danger" href="#" onclick="handleLogout(); return false;"><i class="bi bi-box-arrow-left me-2"></i>Sair</a></li>
+            </ul>
           </div>
+          <span id="userRoleBadge" class="badge ms-1" style="font-size:0.7rem;"></span>
         </div>
       </div>
 
@@ -91,6 +106,7 @@
         </div>
         <div class="modal-body" id="modalBody"></div>
         <div class="modal-footer">
+          <div id="modalError" class="text-danger w-100 mb-2" style="display:none;"></div>
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
           <button type="button" class="btn-admin" id="modalSave" onclick="saveRecord()">
             <i class="bi bi-check-lg"></i> Salvar
@@ -111,11 +127,49 @@
         <div class="modal-body text-center py-4">
           <i class="bi bi-exclamation-triangle-fill" style="font-size:3rem;color:#e74c3c;"></i>
           <p class="mt-3 mb-0">Tem certeza que deseja excluir este registro?</p>
+          <div id="deleteError" class="text-danger mt-2" style="display:none;"></div>
         </div>
         <div class="modal-footer justify-content-center">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
           <button type="button" class="btn-admin btn-admin-danger" id="confirmDelete">
             <i class="bi bi-trash"></i> Excluir
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal alterar senha -->
+  <div class="modal fade modal-admin" id="passwordModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-key me-2"></i>Alterar Senha</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="passwordForm">
+            <div class="mb-3">
+              <label class="form-label fw-bold">Senha Atual</label>
+              <input type="password" class="form-control" name="current_password" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Nova Senha</label>
+              <input type="password" class="form-control" name="new_password" required minlength="6">
+              <small class="text-muted">Mínimo 6 caracteres</small>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Confirmar Nova Senha</label>
+              <input type="password" class="form-control" name="confirm_password" required minlength="6">
+            </div>
+          </form>
+          <div id="passwordError" class="text-danger" style="display:none;"></div>
+          <div id="passwordSuccess" class="text-success" style="display:none;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn-admin" id="passwordSave" onclick="changePassword()">
+            <i class="bi bi-check-lg"></i> Alterar
           </button>
         </div>
       </div>
@@ -132,6 +186,7 @@
     let currentEditId = null;
     let currentDeleteId = null;
     let currentDeleteSection = null;
+    let currentUser = null; // { id, name, email, role }
 
     function getToken() {
       return localStorage.getItem('admin_token');
@@ -144,6 +199,13 @@
       };
     }
 
+    function esc(str) {
+      if (str === null || str === undefined) return '';
+      const d = document.createElement('div');
+      d.textContent = String(str);
+      return d.innerHTML;
+    }
+
     async function apiFetch(url, options = {}) {
       options.headers = { ...authHeaders(), ...options.headers };
       const res = await fetch(API + url, options);
@@ -151,6 +213,10 @@
         localStorage.removeItem('admin_token');
         localStorage.removeItem('admin_user');
         window.location.href = 'login.html';
+        return null;
+      }
+      if (res.status === 403) {
+        showToast('Acesso negado. Permissão insuficiente.', 'danger');
         return null;
       }
       return res;
@@ -167,25 +233,110 @@
       document.getElementById('sidebarOverlay').classList.toggle('show');
     }
 
-    // Init
-    (function init() {
-      if (!getToken()) {
-        window.location.href = 'login.html';
-        return;
+    function showToast(message, type = 'danger') {
+      let container = document.getElementById('toastContainer');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.style.cssText = 'position:fixed;top:80px;right:20px;z-index:9999;';
+        document.body.appendChild(container);
       }
-      const user = JSON.parse(localStorage.getItem('admin_user') || '{}');
-      document.getElementById('userName').textContent = user.name || 'Admin';
-      document.getElementById('userAvatar').textContent = (user.name || 'A')[0].toUpperCase();
+      const id = 'toast_' + Date.now();
+      container.insertAdjacentHTML('beforeend', `
+        <div id="${id}" class="alert alert-${type} alert-dismissible fade show shadow" role="alert" style="min-width:280px;margin-bottom:8px;">
+          ${esc(message)}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      `);
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+      }, 5000);
+    }
+
+    // ==========================================
+    // VERIFY SESSION (real API call, not just localStorage)
+    // ==========================================
+    async function verifySession() {
+      const token = getToken();
+      if (!token) {
+        window.location.href = 'login.html';
+        return false;
+      }
+      try {
+        const res = await fetch(API + '/auth/verify', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) {
+          localStorage.removeItem('admin_token');
+          localStorage.removeItem('admin_user');
+          window.location.href = 'login.html';
+          return false;
+        }
+        const data = await res.json();
+        currentUser = data.user;
+        localStorage.setItem('admin_user', JSON.stringify(currentUser));
+        return true;
+      } catch (err) {
+        localStorage.removeItem('admin_token');
+        localStorage.removeItem('admin_user');
+        window.location.href = 'login.html';
+        return false;
+      }
+    }
+
+    function applyPermissions() {
+      const isAdmin = currentUser.role === 'admin';
+
+      // Mostrar/ocultar seção de Usuários na sidebar
+      document.querySelectorAll('.nav-section-admin, .nav-link-admin').forEach(el => {
+        el.style.display = isAdmin ? '' : 'none';
+      });
+
+      // Nome e avatar
+      document.getElementById('userName').textContent = currentUser.name || 'Admin';
+      document.getElementById('userAvatar').textContent = (currentUser.name || 'A')[0].toUpperCase();
+
+      // Badge de role
+      const badge = document.getElementById('userRoleBadge');
+      if (isAdmin) {
+        badge.textContent = 'Admin';
+        badge.className = 'badge ms-1 bg-danger';
+        badge.style.fontSize = '0.7rem';
+      } else {
+        badge.textContent = 'Editor';
+        badge.className = 'badge ms-1 bg-secondary';
+        badge.style.fontSize = '0.7rem';
+      }
+    }
+
+    // Init
+    (async function init() {
+      const valid = await verifySession();
+      if (!valid) return;
+
+      applyPermissions();
+
+      // Esconder loader, mostrar app
+      document.getElementById('authLoader').style.display = 'none';
+      document.getElementById('adminApp').style.display = '';
 
       // Nav click handlers
       document.querySelectorAll('.sidebar-nav a[data-section]').forEach(link => {
         link.addEventListener('click', e => {
           e.preventDefault();
+          const section = link.dataset.section;
+
+          // Bloquear editor de acessar seções admin-only
+          if (section === 'usuarios' && currentUser.role !== 'admin') {
+            showToast('Acesso restrito a administradores.', 'danger');
+            return;
+          }
+
           document.querySelectorAll('.sidebar-nav a').forEach(l => l.classList.remove('active'));
           link.classList.add('active');
-          currentSection = link.dataset.section;
+          currentSection = section;
           loadSection(currentSection);
-          // Fechar sidebar em mobile
           if (window.innerWidth < 992) toggleSidebar();
         });
       });
@@ -197,6 +348,13 @@
     // SECTIONS LOADER
     // ==========================================
     function loadSection(section) {
+      // Checagem dupla de permissão
+      if (section === 'usuarios' && currentUser.role !== 'admin') {
+        showToast('Acesso restrito a administradores.', 'danger');
+        loadSection('dashboard');
+        return;
+      }
+
       const titles = {
         dashboard: ['Dashboard', 'Visão geral do sistema'],
         execucao: ['Execução Financeira', 'Gerencie receitas e despesas'],
@@ -245,34 +403,39 @@
             <div class="col-sm-6 col-xl-3">
               <div class="stat-card">
                 <div class="stat-icon bg-green"><i class="bi bi-cash-stack"></i></div>
-                <div class="stat-info"><h3>${stats.execucao || 0}</h3><p>Registros Financeiros</p></div>
+                <div class="stat-info"><h3>${esc(stats.execucao || 0)}</h3><p>Registros Financeiros</p></div>
               </div>
             </div>
             <div class="col-sm-6 col-xl-3">
               <div class="stat-card">
                 <div class="stat-icon bg-gold"><i class="bi bi-coin"></i></div>
-                <div class="stat-info"><h3>${stats.emendas || 0}</h3><p>Emendas Parlamentares</p></div>
+                <div class="stat-info"><h3>${esc(stats.emendas || 0)}</h3><p>Emendas Parlamentares</p></div>
               </div>
             </div>
             <div class="col-sm-6 col-xl-3">
               <div class="stat-card">
                 <div class="stat-icon bg-blue"><i class="bi bi-file-earmark-pdf"></i></div>
-                <div class="stat-info"><h3>${stats.documentos || 0}</h3><p>Documentos</p></div>
+                <div class="stat-info"><h3>${esc(stats.documentos || 0)}</h3><p>Documentos</p></div>
               </div>
             </div>
             <div class="col-sm-6 col-xl-3">
               <div class="stat-card">
                 <div class="stat-icon bg-red"><i class="bi bi-building-check"></i></div>
-                <div class="stat-info"><h3>${stats.parcerias || 0}</h3><p>Parcerias Públicas</p></div>
+                <div class="stat-info"><h3>${esc(stats.parcerias || 0)}</h3><p>Parcerias Públicas</p></div>
               </div>
             </div>
           </div>
           <div class="row g-4">
             <div class="col-lg-6">
               <div class="admin-panel">
-                <div class="panel-header"><h5><i class="bi bi-clock-history me-2"></i>Atividade Recente</h5></div>
-                <div class="panel-body" id="recentActivity">
-                  <p class="text-muted mb-0">Nenhuma atividade recente.</p>
+                <div class="panel-header"><h5><i class="bi bi-person-circle me-2"></i>Minha Conta</h5></div>
+                <div class="panel-body">
+                  <p class="mb-1"><strong>Nome:</strong> ${esc(currentUser.name)}</p>
+                  <p class="mb-1"><strong>E-mail:</strong> ${esc(currentUser.email)}</p>
+                  <p class="mb-2"><strong>Perfil:</strong> <span class="badge ${currentUser.role === 'admin' ? 'bg-danger' : 'bg-secondary'}">${esc(currentUser.role)}</span></p>
+                  <button class="btn-admin btn-admin-sm btn-admin-outline" onclick="openChangePassword()">
+                    <i class="bi bi-key"></i> Alterar Senha
+                  </button>
                 </div>
               </div>
             </div>
@@ -380,8 +543,9 @@
     const usuariosFields = [
       { name: 'name', label: 'Nome', type: 'text', required: true },
       { name: 'email', label: 'E-mail', type: 'email', required: true },
-      { name: 'password', label: 'Senha', type: 'password', required: true },
-      { name: 'role', label: 'Perfil', type: 'select', options: ['admin', 'editor'], required: true }
+      { name: 'password', label: 'Senha', type: 'password', requiredOnCreate: true },
+      { name: 'role', label: 'Perfil', type: 'select', options: ['admin', 'editor'], required: true },
+      { name: 'active', label: 'Status', type: 'select', options: [{ value: '1', label: 'Ativo' }, { value: '0', label: 'Inativo' }], required: true }
     ];
 
     // Column definitions for tables
@@ -394,7 +558,7 @@
       prestacao: ['titulo', 'tipo', 'ano_referencia'],
       noticias: ['titulo', 'publicado', 'created_at'],
       galeria: ['titulo', 'album'],
-      usuarios: ['name', 'email', 'role']
+      usuarios: ['name', 'email', 'role', 'active']
     };
 
     // ==========================================
@@ -411,12 +575,13 @@
 
       try {
         const res = await apiFetch(`/admin/${section}`);
-        const data = res ? await res.json() : [];
+        if (!res) return;
+        const data = await res.json();
         const cols = sectionColumns[section] || fields.map(f => f.name).slice(0, 4);
 
         let tableHead = cols.map(c => {
           const f = fields.find(f => f.name === c);
-          return `<th>${f ? f.label : c}</th>`;
+          return `<th>${esc(f ? f.label : c)}</th>`;
         }).join('');
 
         let tableBody = '';
@@ -425,16 +590,26 @@
             let cells = cols.map(c => {
               let val = row[c] ?? '';
               if (c === 'valor' && val) val = 'R$ ' + parseFloat(val).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-              if (c === 'status') val = `<span class="status-badge status-${statusClass(val)}">${val}</span>`;
+              else if (c === 'status') val = `<span class="status-badge status-${statusClass(val)}">${esc(val)}</span>`;
+              else if (c === 'role') val = `<span class="badge ${val === 'admin' ? 'bg-danger' : 'bg-secondary'}">${esc(val)}</span>`;
+              else if (c === 'active') val = val ? '<span class="badge bg-success">Ativo</span>' : '<span class="badge bg-warning text-dark">Inativo</span>';
+              else val = esc(val);
               return `<td>${val}</td>`;
             }).join('');
-            return `<tr>
-              ${cells}
-              <td class="text-end">
-                <button class="btn-admin btn-admin-sm me-1" onclick="editRecord('${section}', ${row.id})"><i class="bi bi-pencil"></i></button>
-                <button class="btn-admin btn-admin-sm btn-admin-danger" onclick="deleteRecord('${section}', ${row.id})"><i class="bi bi-trash"></i></button>
-              </td>
-            </tr>`;
+
+            // Para usuários, impedir editor de editar/excluir (segurança visual - backend já bloqueia)
+            let actionBtns = `
+              <button class="btn-admin btn-admin-sm me-1" onclick="editRecord('${esc(section)}', ${row.id})" title="Editar"><i class="bi bi-pencil"></i></button>
+              <button class="btn-admin btn-admin-sm btn-admin-danger" onclick="deleteRecord('${esc(section)}', ${row.id})" title="Excluir"><i class="bi bi-trash"></i></button>
+            `;
+
+            // Na lista de usuários, destacar o próprio usuário
+            let rowClass = '';
+            if (section === 'usuarios' && row.id === currentUser.id) {
+              rowClass = ' style="background:rgba(17,101,48,0.05);"';
+            }
+
+            return `<tr${rowClass}>${cells}<td class="text-end">${actionBtns}</td></tr>`;
           }).join('');
         } else {
           tableBody = `<tr><td colspan="${cols.length + 1}" class="text-center text-muted py-4">Nenhum registro encontrado.</td></tr>`;
@@ -443,8 +618,8 @@
         main.innerHTML = `
           <div class="admin-panel">
             <div class="panel-header">
-              <h5><i class="bi bi-table me-2"></i>${label}</h5>
-              <button class="btn-admin" onclick="openNewRecord('${section}', '${label}')">
+              <h5><i class="bi bi-table me-2"></i>${esc(label)}</h5>
+              <button class="btn-admin" onclick="openNewRecord('${esc(section)}', '${esc(label)}')">
                 <i class="bi bi-plus-lg"></i> Novo
               </button>
             </div>
@@ -473,31 +648,77 @@
     }
 
     function buildForm(fields, data = {}) {
+      const isEdit = !!data.id;
       return fields.map(f => {
-        if (f.name === 'password' && data.id) {
+        // Password: optional on edit, required on create
+        if (f.name === 'password') {
+          if (isEdit) {
+            return `<div class="mb-3">
+              <label class="form-label fw-bold">${esc(f.label)} <small class="text-muted">(deixe em branco para manter)</small></label>
+              <input type="password" class="form-control" name="${f.name}" placeholder="Nova senha (mínimo 6 caracteres)" minlength="6">
+            </div>`;
+          } else {
+            return `<div class="mb-3">
+              <label class="form-label fw-bold">${esc(f.label)} <span class="text-danger">*</span></label>
+              <input type="password" class="form-control" name="${f.name}" required minlength="6" placeholder="Mínimo 6 caracteres">
+            </div>`;
+          }
+        }
+
+        // Active field: show as select with Ativo/Inativo
+        if (f.name === 'active') {
+          const val = data.id !== undefined ? String(data[f.name] ?? '1') : '1';
+          // Impedir desativar a si mesmo
+          const disabled = (isEdit && data.id === currentUser.id) ? 'disabled' : '';
+          const note = disabled ? '<small class="text-muted d-block">Você não pode desativar sua própria conta.</small>' : '';
           return `<div class="mb-3">
-            <label class="form-label fw-bold">${f.label} <small class="text-muted">(deixe em branco para manter)</small></label>
-            <input type="password" class="form-control" name="${f.name}" placeholder="Nova senha">
+            <label class="form-label fw-bold">${esc(f.label)}</label>
+            <select class="form-select" name="${f.name}" ${disabled}>
+              <option value="1" ${val === '1' ? 'selected' : ''}>Ativo</option>
+              <option value="0" ${val === '0' ? 'selected' : ''}>Inativo</option>
+            </select>
+            ${note}
           </div>`;
         }
-        const val = data[f.name] || '';
+
+        // Role field: impedir rebaixar a si mesmo
+        if (f.name === 'role' && isEdit && data.id === currentUser.id) {
+          const val = data[f.name] || 'editor';
+          return `<div class="mb-3">
+            <label class="form-label fw-bold">${esc(f.label)}</label>
+            <select class="form-select" name="${f.name}" disabled>
+              <option value="${esc(val)}" selected>${esc(val)}</option>
+            </select>
+            <small class="text-muted">Você não pode alterar seu próprio perfil.</small>
+          </div>`;
+        }
+
+        const val = data[f.name] ?? '';
         const req = f.required ? 'required' : '';
+
         if (f.type === 'textarea') {
           return `<div class="mb-3">
-            <label class="form-label fw-bold">${f.label}</label>
-            <textarea class="form-control" name="${f.name}" rows="3" ${req}>${val}</textarea>
+            <label class="form-label fw-bold">${esc(f.label)}${f.required ? ' <span class="text-danger">*</span>' : ''}</label>
+            <textarea class="form-control" name="${f.name}" rows="3" ${req}>${esc(val)}</textarea>
           </div>`;
         }
+
         if (f.type === 'select') {
-          const opts = f.options.map(o => `<option value="${o}" ${val === o ? 'selected' : ''}>${o}</option>`).join('');
+          const opts = f.options.map(o => {
+            if (typeof o === 'object') {
+              return `<option value="${esc(o.value)}" ${String(val) === String(o.value) ? 'selected' : ''}>${esc(o.label)}</option>`;
+            }
+            return `<option value="${esc(o)}" ${val === o ? 'selected' : ''}>${esc(o)}</option>`;
+          }).join('');
           return `<div class="mb-3">
-            <label class="form-label fw-bold">${f.label}</label>
+            <label class="form-label fw-bold">${esc(f.label)}${f.required ? ' <span class="text-danger">*</span>' : ''}</label>
             <select class="form-select" name="${f.name}" ${req}><option value="">Selecione...</option>${opts}</select>
           </div>`;
         }
+
         return `<div class="mb-3">
-          <label class="form-label fw-bold">${f.label}</label>
-          <input type="${f.type}" class="form-control" name="${f.name}" value="${val}" ${req}>
+          <label class="form-label fw-bold">${esc(f.label)}${f.required ? ' <span class="text-danger">*</span>' : ''}</label>
+          <input type="${f.type}" class="form-control" name="${f.name}" value="${esc(val)}" ${req}>
         </div>`;
       }).join('');
     }
@@ -509,6 +730,7 @@
       currentFields = fields;
       document.getElementById('modalTitle').textContent = `Novo ${label}`;
       document.getElementById('modalBody').innerHTML = `<form id="recordForm">${buildForm(fields)}</form>`;
+      hideModalError();
       new bootstrap.Modal(document.getElementById('adminModal')).show();
     }
 
@@ -520,25 +742,57 @@
 
       try {
         const res = await apiFetch(`/admin/${section}/${id}`);
-        const data = res ? await res.json() : {};
+        if (!res) return;
+        const data = await res.json();
+        if (data.error) {
+          showToast(data.error, 'danger');
+          return;
+        }
         document.getElementById('modalTitle').textContent = 'Editar Registro';
         document.getElementById('modalBody').innerHTML = `<form id="recordForm">${buildForm(fields, data)}</form>`;
+        hideModalError();
         new bootstrap.Modal(document.getElementById('adminModal')).show();
       } catch (err) {
-        alert('Erro ao carregar registro.');
+        showToast('Erro ao carregar registro.', 'danger');
       }
+    }
+
+    function showModalError(msg) {
+      const el = document.getElementById('modalError');
+      el.textContent = msg;
+      el.style.display = '';
+    }
+
+    function hideModalError() {
+      const el = document.getElementById('modalError');
+      el.textContent = '';
+      el.style.display = 'none';
     }
 
     async function saveRecord() {
       const form = document.getElementById('recordForm');
+      hideModalError();
+
+      // Validação nativa do formulário
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
       const formData = {};
       currentFields.forEach(f => {
         const el = form.querySelector(`[name="${f.name}"]`);
-        if (el) {
-          const val = el.value.trim();
-          if (f.name === 'password' && currentEditId && !val) return;
-          formData[f.name] = val;
-        }
+        if (!el) return;
+
+        // Se o campo está disabled (como role/active para o próprio usuário), pular
+        if (el.disabled) return;
+
+        const val = el.value.trim();
+
+        // Password: ignorar se vazio em edição
+        if (f.name === 'password' && currentEditId && !val) return;
+
+        formData[f.name] = val;
       });
 
       const btn = document.getElementById('modalSave');
@@ -559,12 +813,13 @@
         if (res && res.ok) {
           bootstrap.Modal.getInstance(document.getElementById('adminModal')).hide();
           loadSection(currentSectionName);
-        } else {
-          const err = res ? await res.json() : {};
-          alert(err.error || 'Erro ao salvar.');
+          showToast('Registro salvo com sucesso!', 'success');
+        } else if (res) {
+          const err = await res.json();
+          showModalError(err.error || 'Erro ao salvar.');
         }
       } catch (err) {
-        alert('Erro de conexão.');
+        showModalError('Erro de conexão.');
       }
 
       btn.disabled = false;
@@ -572,21 +827,41 @@
     }
 
     function deleteRecord(section, id) {
+      // Impedir excluir a si mesmo (visual)
+      if (section === 'usuarios' && id === currentUser.id) {
+        showToast('Você não pode excluir seu próprio usuário.', 'danger');
+        return;
+      }
+
       currentDeleteId = id;
       currentDeleteSection = section;
+      const deleteError = document.getElementById('deleteError');
+      deleteError.style.display = 'none';
+
       const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
       document.getElementById('confirmDelete').onclick = async () => {
+        const delBtn = document.getElementById('confirmDelete');
+        delBtn.disabled = true;
+        delBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
         try {
           const res = await apiFetch(`/admin/${currentDeleteSection}/${currentDeleteId}`, { method: 'DELETE' });
           if (res && res.ok) {
             modal.hide();
             loadSection(currentDeleteSection);
-          } else {
-            alert('Erro ao excluir.');
+            showToast('Registro excluído.', 'success');
+          } else if (res) {
+            const err = await res.json();
+            deleteError.textContent = err.error || 'Erro ao excluir.';
+            deleteError.style.display = '';
           }
         } catch (err) {
-          alert('Erro de conexão.');
+          deleteError.textContent = 'Erro de conexão.';
+          deleteError.style.display = '';
         }
+
+        delBtn.disabled = false;
+        delBtn.innerHTML = '<i class="bi bi-trash"></i> Excluir';
       };
       modal.show();
     }
@@ -604,6 +879,74 @@
         usuarios: usuariosFields
       };
       return map[section] || [];
+    }
+
+    // ==========================================
+    // ALTERAR SENHA
+    // ==========================================
+    function openChangePassword() {
+      document.getElementById('passwordForm').reset();
+      document.getElementById('passwordError').style.display = 'none';
+      document.getElementById('passwordSuccess').style.display = 'none';
+      new bootstrap.Modal(document.getElementById('passwordModal')).show();
+    }
+
+    async function changePassword() {
+      const form = document.getElementById('passwordForm');
+      const errEl = document.getElementById('passwordError');
+      const succEl = document.getElementById('passwordSuccess');
+      errEl.style.display = 'none';
+      succEl.style.display = 'none';
+
+      const current = form.current_password.value;
+      const newPwd = form.new_password.value;
+      const confirm = form.confirm_password.value;
+
+      if (!current || !newPwd || !confirm) {
+        errEl.textContent = 'Preencha todos os campos.';
+        errEl.style.display = '';
+        return;
+      }
+      if (newPwd.length < 6) {
+        errEl.textContent = 'A nova senha deve ter pelo menos 6 caracteres.';
+        errEl.style.display = '';
+        return;
+      }
+      if (newPwd !== confirm) {
+        errEl.textContent = 'A nova senha e a confirmação não coincidem.';
+        errEl.style.display = '';
+        return;
+      }
+
+      const btn = document.getElementById('passwordSave');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+      try {
+        const res = await apiFetch('/auth/password', {
+          method: 'PUT',
+          body: JSON.stringify({ current_password: current, new_password: newPwd })
+        });
+
+        if (res && res.ok) {
+          succEl.textContent = 'Senha alterada com sucesso!';
+          succEl.style.display = '';
+          form.reset();
+          setTimeout(() => {
+            bootstrap.Modal.getInstance(document.getElementById('passwordModal')).hide();
+          }, 1500);
+        } else if (res) {
+          const err = await res.json();
+          errEl.textContent = err.error || 'Erro ao alterar senha.';
+          errEl.style.display = '';
+        }
+      } catch (err) {
+        errEl.textContent = 'Erro de conexão.';
+        errEl.style.display = '';
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-check-lg"></i> Alterar';
     }
   </script>
 </body>
