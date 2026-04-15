@@ -1300,6 +1300,17 @@
   display: none;
 }
 
+.login-success {
+  background: #d1e7dd;
+  color: #0f5132;
+  border: 1px solid #badbcc;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  margin-bottom: 16px;
+  display: none;
+}
+
 .login-footer {
   text-align: center;
   padding: 0 32px 24px;

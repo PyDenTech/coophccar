@@ -21,21 +21,23 @@
         <h2>Painel Administrativo</h2>
         <p>COOPHCCAR – Cooperativa dos Produtores e Horticultores</p>
       </div>
-      <div class="login-body">
+
+      <!-- STEP 1: Login -->
+      <div class="login-body" id="stepLogin">
         <div class="login-error" id="loginError">
           <i class="bi bi-exclamation-triangle-fill me-2"></i>
-          <span id="loginErrorMsg">Credenciais inválidas.</span>
+          <span id="loginErrorMsg"></span>
         </div>
         <form id="loginForm" onsubmit="return handleLogin(event)">
           <div class="form-group">
             <label for="email"><i class="bi bi-envelope me-1"></i> E-mail</label>
-            <input type="email" class="form-control" id="email" placeholder="admin@coophccar.org.br" required>
+            <input type="email" class="form-control" id="email" placeholder="Seu e-mail de acesso" required autocomplete="email">
           </div>
           <div class="form-group">
             <label for="password"><i class="bi bi-key me-1"></i> Senha</label>
             <div class="position-relative">
-              <input type="password" class="form-control" id="password" placeholder="Digite sua senha" required>
-              <button type="button" class="btn position-absolute end-0 top-0 h-100 px-3" style="color:#888;" onclick="togglePassword()">
+              <input type="password" class="form-control" id="password" placeholder="Sua senha" required autocomplete="current-password">
+              <button type="button" class="btn position-absolute end-0 top-0 h-100 px-3" style="color:#888;" onclick="togglePassword('password','togglePwdIcon')" tabindex="-1">
                 <i class="bi bi-eye" id="togglePwdIcon"></i>
               </button>
             </div>
@@ -44,7 +46,97 @@
             <i class="bi bi-box-arrow-in-right"></i> Entrar
           </button>
         </form>
+        <div class="text-center mt-3">
+          <a href="#" onclick="showStep('stepForgot'); return false;" style="color:var(--coophccar-green);font-size:0.88rem;text-decoration:none;font-weight:600;">
+            <i class="bi bi-question-circle me-1"></i>Esqueceu a senha?
+          </a>
+        </div>
       </div>
+
+      <!-- STEP 2: Solicitar OTP -->
+      <div class="login-body" id="stepForgot" style="display:none;">
+        <div class="login-error" id="forgotError">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          <span id="forgotErrorMsg"></span>
+        </div>
+        <div class="login-success" id="forgotSuccess">
+          <i class="bi bi-check-circle-fill me-2"></i>
+          <span id="forgotSuccessMsg"></span>
+        </div>
+        <h6 style="color:var(--coophccar-green-dark);font-weight:700;margin-bottom:4px;">Recuperar Senha</h6>
+        <p style="font-size:0.85rem;color:#666;margin-bottom:16px;">Informe seu e-mail cadastrado para receber o codigo de verificacao.</p>
+        <form onsubmit="return handleForgot(event)">
+          <div class="form-group">
+            <label for="forgotEmail"><i class="bi bi-envelope me-1"></i> E-mail</label>
+            <input type="email" class="form-control" id="forgotEmail" placeholder="Seu e-mail cadastrado" required autocomplete="email">
+          </div>
+          <button type="submit" class="btn-login" id="btnForgot">
+            <i class="bi bi-send"></i> Enviar Codigo
+          </button>
+        </form>
+        <div class="text-center mt-3">
+          <a href="#" onclick="showStep('stepLogin'); return false;" style="color:var(--coophccar-green);font-size:0.88rem;text-decoration:none;font-weight:600;">
+            <i class="bi bi-arrow-left me-1"></i>Voltar ao login
+          </a>
+        </div>
+      </div>
+
+      <!-- STEP 3: Verificar OTP -->
+      <div class="login-body" id="stepOtp" style="display:none;">
+        <div class="login-error" id="otpError">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          <span id="otpErrorMsg"></span>
+        </div>
+        <h6 style="color:var(--coophccar-green-dark);font-weight:700;margin-bottom:4px;">Codigo de Verificacao</h6>
+        <p style="font-size:0.85rem;color:#666;margin-bottom:16px;">Digite o codigo de 6 digitos enviado para <strong id="otpEmailDisplay"></strong></p>
+        <form onsubmit="return handleVerifyOtp(event)">
+          <div class="form-group">
+            <label for="otpCode"><i class="bi bi-shield-lock me-1"></i> Codigo OTP</label>
+            <input type="text" class="form-control text-center" id="otpCode" placeholder="000000" required maxlength="6" pattern="[0-9]{6}" style="font-size:1.5rem;letter-spacing:8px;font-weight:700;" autocomplete="one-time-code">
+          </div>
+          <button type="submit" class="btn-login" id="btnOtp">
+            <i class="bi bi-check-circle"></i> Verificar
+          </button>
+        </form>
+        <div class="text-center mt-3">
+          <a href="#" onclick="handleResendOtp(); return false;" id="resendLink" style="color:var(--coophccar-green);font-size:0.85rem;text-decoration:none;font-weight:600;">
+            <i class="bi bi-arrow-repeat me-1"></i>Reenviar codigo
+          </a>
+        </div>
+      </div>
+
+      <!-- STEP 4: Nova Senha -->
+      <div class="login-body" id="stepReset" style="display:none;">
+        <div class="login-error" id="resetError">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          <span id="resetErrorMsg"></span>
+        </div>
+        <div class="login-success" id="resetSuccess">
+          <i class="bi bi-check-circle-fill me-2"></i>
+          <span id="resetSuccessMsg"></span>
+        </div>
+        <h6 style="color:var(--coophccar-green-dark);font-weight:700;margin-bottom:4px;">Nova Senha</h6>
+        <p style="font-size:0.85rem;color:#666;margin-bottom:16px;">Defina sua nova senha de acesso.</p>
+        <form onsubmit="return handleReset(event)">
+          <div class="form-group">
+            <label for="newPassword"><i class="bi bi-lock me-1"></i> Nova Senha</label>
+            <div class="position-relative">
+              <input type="password" class="form-control" id="newPassword" placeholder="Minimo 6 caracteres" required minlength="6" autocomplete="new-password">
+              <button type="button" class="btn position-absolute end-0 top-0 h-100 px-3" style="color:#888;" onclick="togglePassword('newPassword','toggleNewPwdIcon')" tabindex="-1">
+                <i class="bi bi-eye" id="toggleNewPwdIcon"></i>
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="confirmPassword"><i class="bi bi-lock-fill me-1"></i> Confirmar Senha</label>
+            <input type="password" class="form-control" id="confirmPassword" placeholder="Repita a nova senha" required minlength="6" autocomplete="new-password">
+          </div>
+          <button type="submit" class="btn-login" id="btnReset">
+            <i class="bi bi-check-lg"></i> Redefinir Senha
+          </button>
+        </form>
+      </div>
+
       <div class="login-footer">
         <a href="index.html"><i class="bi bi-arrow-left"></i> Voltar ao site</a>
       </div>
@@ -52,30 +144,55 @@
   </div>
 
   <script>
-    function togglePassword() {
-      const pwd = document.getElementById('password');
-      const icon = document.getElementById('togglePwdIcon');
-      if (pwd.type === 'password') {
-        pwd.type = 'text';
+    let recoveryEmail = '';
+    let resetToken = '';
+
+    function showStep(stepId) {
+      ['stepLogin','stepForgot','stepOtp','stepReset'].forEach(id => {
+        document.getElementById(id).style.display = id === stepId ? '' : 'none';
+      });
+      // Limpar erros
+      document.querySelectorAll('.login-error, .login-success').forEach(el => el.style.display = 'none');
+    }
+
+    function togglePassword(inputId, iconId) {
+      const inp = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      if (inp.type === 'password') {
+        inp.type = 'text';
         icon.className = 'bi bi-eye-slash';
       } else {
-        pwd.type = 'password';
+        inp.type = 'password';
         icon.className = 'bi bi-eye';
       }
     }
 
+    function showError(boxId, msgId, msg) {
+      const box = document.getElementById(boxId);
+      document.getElementById(msgId).textContent = msg;
+      box.style.display = 'block';
+    }
+
+    function showSuccess(boxId, msgId, msg) {
+      const box = document.getElementById(boxId);
+      document.getElementById(msgId).textContent = msg;
+      box.style.display = 'block';
+    }
+
+    function btnLoading(btnId, loading, html) {
+      const btn = document.getElementById(btnId);
+      btn.disabled = loading;
+      btn.innerHTML = loading ? '<span class="spinner-border spinner-border-sm me-2"></span> Aguarde...' : html;
+    }
+
+    // LOGIN
     async function handleLogin(e) {
       e.preventDefault();
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
-      const btn = document.getElementById('btnLogin');
-      const errorBox = document.getElementById('loginError');
-      const errorMsg = document.getElementById('loginErrorMsg');
+      document.getElementById('loginError').style.display = 'none';
 
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Entrando...';
-      errorBox.style.display = 'none';
-
+      btnLoading('btnLogin', true);
       try {
         const res = await fetch('/api/auth/login', {
           method: 'POST',
@@ -87,20 +204,126 @@
           localStorage.setItem('admin_token', data.token);
           localStorage.setItem('admin_user', JSON.stringify(data.user));
           window.location.href = 'admin.html';
-        } else {
-          errorMsg.textContent = data.error || 'Credenciais inválidas.';
-          errorBox.style.display = 'block';
+          return;
         }
+        showError('loginError', 'loginErrorMsg', data.error || 'Credenciais invalidas.');
       } catch (err) {
-        errorMsg.textContent = 'Erro de conexão com o servidor.';
-        errorBox.style.display = 'block';
+        showError('loginError', 'loginErrorMsg', 'Erro de conexao com o servidor.');
       }
-
-      btn.disabled = false;
-      btn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Entrar';
+      btnLoading('btnLogin', false, '<i class="bi bi-box-arrow-in-right"></i> Entrar');
     }
 
-    // Se já logado, redireciona
+    // FORGOT - solicitar OTP
+    async function handleForgot(e) {
+      e.preventDefault();
+      recoveryEmail = document.getElementById('forgotEmail').value;
+      document.getElementById('forgotError').style.display = 'none';
+      document.getElementById('forgotSuccess').style.display = 'none';
+
+      btnLoading('btnForgot', true);
+      try {
+        const res = await fetch('/api/auth/forgot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: recoveryEmail })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          document.getElementById('otpEmailDisplay').textContent = recoveryEmail;
+          showStep('stepOtp');
+          document.getElementById('otpCode').focus();
+        } else {
+          showError('forgotError', 'forgotErrorMsg', data.error || 'Erro ao enviar codigo.');
+        }
+      } catch (err) {
+        showError('forgotError', 'forgotErrorMsg', 'Erro de conexao com o servidor.');
+      }
+      btnLoading('btnForgot', false, '<i class="bi bi-send"></i> Enviar Codigo');
+    }
+
+    // VERIFY OTP
+    async function handleVerifyOtp(e) {
+      e.preventDefault();
+      const code = document.getElementById('otpCode').value;
+      document.getElementById('otpError').style.display = 'none';
+
+      btnLoading('btnOtp', true);
+      try {
+        const res = await fetch('/api/auth/verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: recoveryEmail, code })
+        });
+        const data = await res.json();
+        if (res.ok && data.reset_token) {
+          resetToken = data.reset_token;
+          showStep('stepReset');
+          document.getElementById('newPassword').focus();
+        } else {
+          showError('otpError', 'otpErrorMsg', data.error || 'Codigo invalido.');
+        }
+      } catch (err) {
+        showError('otpError', 'otpErrorMsg', 'Erro de conexao com o servidor.');
+      }
+      btnLoading('btnOtp', false, '<i class="bi bi-check-circle"></i> Verificar');
+    }
+
+    // RESEND OTP
+    async function handleResendOtp() {
+      const link = document.getElementById('resendLink');
+      link.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Reenviando...';
+      try {
+        await fetch('/api/auth/forgot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: recoveryEmail })
+        });
+        link.innerHTML = '<i class="bi bi-check me-1"></i>Codigo reenviado!';
+        setTimeout(() => {
+          link.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>Reenviar codigo';
+        }, 3000);
+      } catch (err) {
+        link.innerHTML = '<i class="bi bi-x me-1"></i>Erro ao reenviar';
+        setTimeout(() => {
+          link.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>Reenviar codigo';
+        }, 3000);
+      }
+    }
+
+    // RESET PASSWORD
+    async function handleReset(e) {
+      e.preventDefault();
+      const newPwd = document.getElementById('newPassword').value;
+      const confirm = document.getElementById('confirmPassword').value;
+      document.getElementById('resetError').style.display = 'none';
+      document.getElementById('resetSuccess').style.display = 'none';
+
+      if (newPwd !== confirm) {
+        showError('resetError', 'resetErrorMsg', 'As senhas nao coincidem.');
+        return;
+      }
+
+      btnLoading('btnReset', true);
+      try {
+        const res = await fetch('/api/auth/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reset_token: resetToken, new_password: newPwd })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showSuccess('resetSuccess', 'resetSuccessMsg', 'Senha redefinida com sucesso! Redirecionando...');
+          setTimeout(() => showStep('stepLogin'), 2000);
+        } else {
+          showError('resetError', 'resetErrorMsg', data.error || 'Erro ao redefinir senha.');
+        }
+      } catch (err) {
+        showError('resetError', 'resetErrorMsg', 'Erro de conexao com o servidor.');
+      }
+      btnLoading('btnReset', false, '<i class="bi bi-check-lg"></i> Redefinir Senha');
+    }
+
+    // Se ja logado, redireciona
     if (localStorage.getItem('admin_token')) {
       window.location.href = 'admin.html';
     }
